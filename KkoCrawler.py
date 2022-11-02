@@ -15,17 +15,19 @@ import sys
 
 
 def __main__ ():
-    
-    a = len(sys.argv)  
-    st11_crawling().start_crwal() # 트리거
+
+    a = sys.argv[1]  
+    print(a)
+    kakao_crawling(a).start_crwal() # 트리거
 
 #--------------크롤링 시작 ------------------------------   
 
-class st11_crawling:
-    def __init__(self):
+class kakao_crawling:
+    def __init__(self, keyword):
         # self.host = '127.0.0.1'
         # self.kafka_port = '9092'
         self.driver_path = "./chromedriver.exe"
+        self.keyword=keyword
         #  C:/Users/kjh19/OneDrive/바탕 화면/test/chromedriver.exe // 노트북
         # ./chromedriver (2).exe  // 연구실 컴
         # /home/search/apps/dw/chromedriver 서버컴
@@ -44,36 +46,49 @@ class st11_crawling:
         self.cnt = 0
     
     def start_crwal(self):
-        
-        self.driver.get("https://deal.11st.co.kr/browsing/DealAction.tmall?method=getCategory&dispCtgrNo=947161")
-        time.sleep(1)
-        cnt =0
-        for i in range(2,6):
-            print("/html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul[1]/li[{}]".format(str(i)))
-            try:
-                self.driver.find_element_by_xpath("/html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul[1]/li[{}]/a".format(str(i))).click()
-            except Exception as e:
-                self.driver.find_element_by_xpath("/html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul[1]/li[{}]/a".format(str(i))).send_keys(Keys.ENTER)
+        print(self.keyword)
+        self.driver.get("https://store.kakao.com/")
+        time.sleep(2)
+        try:
+            self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/fu-view-pc-gnb/div/div/div/div[3]/fu-view-gnb-menu-util/a[1]").click()
+            self.driver.find_element_by_xpath("/html/body/cu-popup-container2[1]/cu-popup-wrapper2/fu-layer-search-entry/div/div/div[1]/div[1]/div/form/fieldset/div/input").send_keys(self.keyword)
+            self.driver.find_element_by_xpath("/html/body/cu-popup-container2[1]/cu-popup-wrapper2/fu-layer-search-entry/div/div/div[1]/div[1]/div/form/fieldset/div/input").send_keys(Keys.RETURN)
+
+        except Exception as e:
+            print(e)
+            self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/fu-view-pc-gnb/div/div/div/div[3]/fu-view-gnb-menu-util/a[1]").send_keys(Keys.ENTER)
+            self.driver.find_element_by_xpath("/html/body/cu-popup-container2[1]/cu-popup-wrapper2/fu-layer-search-entry/div/div/div[1]/div[1]/div/form/fieldset/div/input").send_keys(self.keyword)
+            self.driver.find_element_by_xpath("/html/body/cu-popup-container2[1]/cu-popup-wrapper2/fu-layer-search-entry/div/div/div[1]/div[1]/div/form/fieldset/div/input").send_keys(Keys.RETURN)
+        time.sleep(2)
+        self.driver.find_element_by_xpath("#mArticle > div.search_result > fu-view-search-filters > div > ul > li:nth-child(1) > a").click()
+        html = self.driver.page_source
             
-            time.sleep(1)
-            last_height = self.driver.execute_script("return document.body.scrollHeight")
-
-            while True:
-                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-                time.sleep(2)
-
-                new_height = self.driver.execute_script("return document.body.scrollHeight")
-                if new_height == last_height:
-                    break
-                last_height = new_height
-            self.driver.find_element_by_tag_name('body').send_keys(Keys.PAGE_DOWN)
-            html = self.driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        a_cnt = self.getData(soup)
+        # cnt =0
+        # for i in range(2,6):
+        #     print("/html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul[1]/li[{}]".format(str(i)))
             
-            soup = BeautifulSoup(html, 'html.parser')
-            a_cnt = self.getData(soup)
-            cnt += a_cnt
-        print(cnt)
+            
+        #     time.sleep(1)
+        #     last_height = self.driver.execute_script("return document.body.scrollHeight")
+
+        #     while True:
+        #         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+        #         time.sleep(2)
+
+        #         new_height = self.driver.execute_script("return document.body.scrollHeight")
+        #         if new_height == last_height:
+        #             break
+        #         last_height = new_height
+        #     self.driver.find_element_by_tag_name('body').send_keys(Keys.PAGE_DOWN)
+        #     html = self.driver.page_source
+            
+        #     soup = BeautifulSoup(html, 'html.parser')
+        #     a_cnt = self.getData(soup)
+        #     cnt += a_cnt
+        # print(cnt)
 
 
     def getData(self, soup):
@@ -114,17 +129,6 @@ class st11_crawling:
                 continue
         return cnt
 
-
-
-       # 1번 #mdPrd > div.viewtype3.list_htype3.ui_templateContent > div.virtual-wrap > div > ul
-       # 2번 #mdPrd > div.viewtype3.list_htype3.ui_templateContent > div.virtual-wrap > div > ul
-
-       # 1번 li태그  # /html/body/div[2]/div[3]/div/div/div[2]/div[2]/div[1]/div/ul
-       # 2번 li태그    /html/body/div[2]/div[3]/div/div/div[2]/div[2]/div[3]/div/ul/li[1]
-       # 식품 종류 태그 
-       # /html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul/li[1] ~[5]
-       
-        
 
 
             
