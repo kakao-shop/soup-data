@@ -35,12 +35,8 @@ class st11_crawling:
         # self.chrome_options.add_argument('--disable-dev-shm-usage') # 서버컴 전용 옵션
         self.chrome_options.add_argument('window-size=1280,1000')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
-        self.author = {}
-        self.paper = []
-        self.papers = []
-        self.info = {}
-        self.test = []
-        self.infolist = []
+        
+        self.titleList = []
         self.cnt = 0
     
     def start_crwal(self):
@@ -74,6 +70,8 @@ class st11_crawling:
             a_cnt = self.getData(soup)
             cnt += a_cnt
         print(cnt)
+        print(len(list(set(self.category))))
+        print(set(self.category))
 
 
     def getData(self, soup):
@@ -81,7 +79,6 @@ class st11_crawling:
         liList = soup.select("#dealPrdListing")
         for i, items in enumerate(liList):
             try:
-                itemList = soup.select("#dealPrdListing > ul:nth-child({}) > li".format(i))
                 for item in items:
                     for data in item:
                         # print(data)
@@ -93,7 +90,7 @@ class st11_crawling:
                             img_src = data.select_one("li > div > a> div.prd_img > img")["src"]
                             categoryName = data.select_one("li > div > div> a").get_text()
                             purchases = data.select_one("li > div > a > div.prd_info > span").get_text()
-                        
+                            self.category.append(categoryName)
                             print("name", name_url["content_name"])
                             print("img_src", img_src)
                             print("web_url", web_url)
