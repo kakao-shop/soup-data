@@ -73,43 +73,43 @@ class kakao_crawling:
         
 
 
-        # soup=""
-        # for site in self.siteList:
-        #     self.driver.get(site)
-        #     time.sleep(1)
-        #     self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/div/fu-pw-category-result/div/div/cu-pagination-list/div/div[1]/div[1]/input").click()
+        soup=""
+        for site in self.siteList:
+            self.driver.get(site)
+            time.sleep(1)
+            self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/div/fu-pw-category-result/div/div/cu-pagination-list/div/div[1]/div[1]/input").click()
 
-        #     time.sleep(2)
-        #     html = self.driver.page_source
-        #     soup = BeautifulSoup(html)
-        #     self.getData(soup)
-        #     time.sleep(2)
-        #     while True:
-        #         try:
-        #             for i in range(4):
-        #                 self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/div/fu-pw-category-result/div/div/cu-pagination-list/div/div[2]/div/button[{}]".format(str(1+i))).click()
-        #                 time.sleep(2)
-        #                 html = self.driver.page_source
-        #                 soup = BeautifulSoup(html)
-        #                 a_cnt = self.getData(soup)
-        #                 if a_cnt == "duplicate":
-        #                     print(a_cnt) 
-        #                     break
-        #                 time.sleep(2)
-        #         except Exception as e:
-        #             break
-        #         try:
-        #             self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/div/fu-pw-category-result/div/div/cu-pagination-list/div/div[3]/button[2]").click()
-        #             time.sleep(2)
-        #             html = self.driver.page_source
-        #             soup = BeautifulSoup(html)
-        #             a_cnt = self.getData(soup)
-        #             if a_cnt == "duplicate": break
-        #             time.sleep(2)
-        #         except Exception as e:
-        #             break
+            time.sleep(2)
+            html = self.driver.page_source
+            soup = BeautifulSoup(html)
+            self.getData(soup)
+            time.sleep(2)
+            while True:
+                try:
+                    for i in range(4):
+                        self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/div/fu-pw-category-result/div/div/cu-pagination-list/div/div[2]/div/button[{}]".format(str(1+i))).click()
+                        time.sleep(2)
+                        html = self.driver.page_source
+                        soup = BeautifulSoup(html)
+                        a_cnt = self.getData(soup)
+                        if a_cnt == "duplicate":
+                            print(a_cnt) 
+                            break
+                        time.sleep(2)
+                except Exception as e:
+                    break
+                try:
+                    self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/div/fu-pw-category-result/div/div/cu-pagination-list/div/div[3]/button[2]").click()
+                    time.sleep(2)
+                    html = self.driver.page_source
+                    soup = BeautifulSoup(html)
+                    a_cnt = self.getData(soup)
+                    if a_cnt == "duplicate": break
+                    time.sleep(2)
+                except Exception as e:
+                    break
 
-        #     print(site, "정상종료")
+            print(site, "정상종료")
 
 
 

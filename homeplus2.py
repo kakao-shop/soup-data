@@ -2,7 +2,6 @@ from selenium import webdriver # 1004 수정
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 import os
-import pandas as pd
 from bs4 import BeautifulSoup
 import re
 import time
@@ -19,7 +18,7 @@ def __main__ ():
     
     st11_crawling().start_crwal() # 트리거
 
-#--------------크롤링 시작2 ------------------------------   
+#--------------크롤링 시작 ------------------------------   
 
 class st11_crawling:
     def __init__(self):
@@ -45,7 +44,7 @@ class st11_crawling:
         time.sleep(1)
         cnt = 0
         idx = 0
-        for i in range(2,11):
+        for i in range(2,10):
             print("/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/ul/li[{}]".format(str(i)))
             try:
                 self.driver.find_element_by_xpath("/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/ul/li[{}]/button".format(str(i))).click()
@@ -69,7 +68,6 @@ class st11_crawling:
             
             soup = BeautifulSoup(html, 'html.parser')
             a_cnt = self.getData(soup, idx)
-            
             cnt += a_cnt
             idx += 1
         print(cnt)
@@ -77,10 +75,9 @@ class st11_crawling:
 
     def getData(self, soup, idx):
         cnt =0
-        names = []
         categories = ['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품','제과','면','물/음료']
         liList = soup.select(".itemListWrap")
-        for i, items in enumerate(liList):
+        for items in liList:
             try:
                # itemList = soup.select(".itemListWrap > .itemDisplayList > div".format(i))
                 for item in items:
@@ -88,23 +85,20 @@ class st11_crawling:
                         cnt +=1
                         print("=====================================s")
                         try:
-                            name = data.select("div > div.detailInfo > a > p")
-                            if len(name) >= 2:
-                                name = data.select_one("div > div.detailInfo > a > p:nth-child(2)").get_text()
-                            else:
-                                name = data.select_one("div > div.detailInfo > a > p").get_text()
-                            names.append(name)
+                            name = data.select_one("div > div.detailInfo > a > p").get_text()
                             web_url = data.select_one("div > div.detailInfo > a")["href"]
-
-                            # img_src = data.select_one("div > div.thumbWrap > button > span > img")['src']
-                            # img_src = data.select_one("div > div.thumbWrap > button > span > img")["src"]
+                            try:
+                                img_src = data.select_one("div > div.thumbWrap > button > span > img")["src"]
+                            except Exception  as e:
+                                img_src = None
                             dprice = data.select_one("div > div.detailInfo > div.priceWrap > div.price > strong").get_text()
-                            buyer = data.select_one("div > div.detailInfo > div.prodScoreWrap > span:nth-child(1)")
+                            buyer = data.select_one("div > div.detailInfo > div.prodScoreWrap > span:nth-child(3)").get_text()
+                            buyer = re.sub(r"[^0-9]", "", buyer)
                             categoryName = categories[idx]
 
                             print("prdName", name)
                             print("web_url", "https://front.homeplus.co.kr"+ web_url)
-                            # print("img_src", img_src)
+                            print("img_src", img_src)
                             print("category", categoryName)
                             print("dprice", dprice)
                             print("buyerNum", buyer)
@@ -114,13 +108,7 @@ class st11_crawling:
                         print("=====================================e")
             except Exception as e:
                 continue
-        print(names)
-        data = pd.DataFrame(names)
-        data.columns = ['prdName']
-        print(data.head())
-        data.to_csv(categories[idx]+'.csv', encoding='cp949') 
         return cnt
-        
 
 
 
