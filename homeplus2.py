@@ -79,7 +79,7 @@ class st11_crawling:
         cnt =0
         names = []
         categories = ['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품','제과','면','물/음료']
-        liList = soup.select("/html/body/div[1]/div/div[3]/div[2]/div/div[2]/div/div/div/div")
+        liList = soup.select(".itemListWrap")
         for i, items in enumerate(liList):
             try:
                # itemList = soup.select(".itemListWrap > .itemDisplayList > div".format(i))
@@ -95,11 +95,9 @@ class st11_crawling:
                                 name = data.select_one("div > div.detailInfo > a > p").get_text()
                             names.append(name)
                             web_url = data.select_one("div > div.detailInfo > a")["href"]
-<<<<<<< HEAD
+
                             # img_src = data.select_one("div > div.thumbWrap > button > span > img")['src']
-=======
-                            img_src = data.select_one("div > div.thumbWrap > button > span > img")["src"]
->>>>>>> c361f27ee75ffee427c560ae18d19b2ec8e57553
+                            # img_src = data.select_one("div > div.thumbWrap > button > span > img")["src"]
                             dprice = data.select_one("div > div.detailInfo > div.priceWrap > div.price > strong").get_text()
                             buyer = data.select_one("div > div.detailInfo > div.prodScoreWrap > span:nth-child(1)")
                             categoryName = categories[idx]
