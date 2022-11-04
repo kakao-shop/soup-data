@@ -1,8 +1,8 @@
 from selenium import webdriver # 1004 수정
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 import os
-import pandas as pd
 from bs4 import BeautifulSoup
 import re
 import time
@@ -31,6 +31,7 @@ class st11_crawling:
         
         self.chrome_options.add_argument('window-size=1280,640')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
+        self.driver.implicitly_wait(3)
         self.author = {}
         self.paper = []
         self.papers = []
@@ -45,7 +46,7 @@ class st11_crawling:
         time.sleep(1)
         cnt = 0
         idx = 0
-        for i in range(2,11):
+        for i in range(2,10):
             print("/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/ul/li[{}]".format(str(i)))
             try:
                 self.driver.find_element_by_xpath("/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/ul/li[{}]/button".format(str(i))).click()
@@ -69,7 +70,6 @@ class st11_crawling:
             
             soup = BeautifulSoup(html, 'html.parser')
             a_cnt = self.getData(soup, idx)
-            
             cnt += a_cnt
             idx += 1
         print(cnt)
@@ -77,7 +77,6 @@ class st11_crawling:
 
     def getData(self, soup, idx):
         cnt =0
-        names = []
         categories = ['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품','제과','면','물/음료']
         liList = soup.select(".itemListWrap")
         for i, items in enumerate(liList):
@@ -85,40 +84,39 @@ class st11_crawling:
                 itemList = soup.select(".itemListWrap > .itemDisplayList:nth-child({}) > div".format(i))
                 for item in items:
                     for data in item:
+                        # print(data)
                         cnt +=1
                         print("=====================================s")
                         try:
-                            name = data.select("div > div.detailInfo > a > p")
-                            if len(name) >= 2:
-                                name = data.select_one("div > div.detailInfo > a > p:nth-child(2)").get_text()
-                            else:
-                                name = data.select_one("div > div.detailInfo > a > p").get_text()
-                            names.append(name)
-                            web_url = data.select_one("div > div.detailInfo > a")["href"]
-                            # img_src = data.select_one("div > div.thumbWrap > button > span > img")['src']
-                            dprice = data.select_one("div > div.detailInfo > div.priceWrap > div.price > strong").get_text()
-                            buyer = data.select_one("div > div.detailInfo > div.prodScoreWrap > span:nth-child(1)")
-                            categoryName = categories[idx]
+                            # name = data.select_one("div > div.thumbWrap > button > span > img")["alt"]
+                            # web_url = data.select_one("div > div.detailInfo > a")["href"]
+                            # img_src = data.select_one("div > div.thumbWrap > button > span > img")["src"]
+                            # dprice = data.select_one("div > div.detailInfo > div.priceWrap > div.price > strong").get_text()
+                            # buyer = data.select_one("div > div.detailInfo > div.prodScoreWrap > span:nth-child(1)")
+                            # categoryName = categories[idx]
+                            print(data)
 
-                            print("prdName", name)
-                            print("web_url", "https://front.homeplus.co.kr"+ web_url)
+                            # if img_src is None:
+                            #     img_src = img_src.get_attribute('data-src')
+                            #     if img_src is None:
+                            #         continue
+                            #     print("img_src", img_src)
+                            # else:
+                            #     img_src = img_src.get('src')
+                            #     print("img_src", img_src)
+                            # print("prdName", name)
+                            # print("web_url", "https://front.homeplus.co.kr"+ web_url)
                             # print("img_src", img_src)
-                            print("category", categoryName)
-                            print("dprice", dprice)
-                            print("buyerNum", buyer)
+                            # print("category", categoryName)
+                            # print("dprice", dprice)
+                            # print("buyerNum", buyer)
                         except Exception as e:
                             print("",e)
                         print(cnt)
                         print("=====================================e")
             except Exception as e:
                 continue
-        print(names)
-        data = pd.DataFrame(names)
-        data.columns = ['prdName']
-        print(data.head())
-        data.to_csv(categories[idx]+'.csv', encoding='cp949') 
         return cnt
-        
 
 
 
