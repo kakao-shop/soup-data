@@ -11,12 +11,12 @@ from kafka import KafkaProducer
 import json
 from json import dumps
 import sys
-
+import pymysql
 
 #--------------------------홈플러스 크롤링----------------------------
 def __main__ ():
     
-    st11_crawling().start_crwal() # 트리거
+    st11_crawling().homeplus_crwal() # 트리거
 
 #--------------크롤링 시작 ------------------------------   
 
@@ -25,7 +25,9 @@ class st11_crawling:
         # self.host = '127.0.0.1'
         # self.kafka_port = '9092'
         self.driver_path = "./chromedriver.exe"
-        
+        self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
+                       db='product_test', charset='utf8')
+        self.cur = self.con.cursor()
         self.chrome_options = Options()
         
         self.chrome_options.add_argument('window-size=1280,640')
@@ -38,7 +40,7 @@ class st11_crawling:
         self.infolist = []
         self.cnt = 0
     
-    def start_crwal(self):
+    def homeplus_crwal(self):
         
         self.driver.get("https://front.homeplus.co.kr/leaflet?gnbNo=201")
         time.sleep(1)
@@ -75,7 +77,7 @@ class st11_crawling:
 
     def getData(self, soup, idx):
         cnt =0
-        categories = ['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품','제과','면','물/음료']
+        categories = ['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품/냉동식품','제과','즉석식품/조미료','물/음료']
         liList = soup.select(".itemListWrap")
         for items in liList:
             try:
@@ -92,34 +94,33 @@ class st11_crawling:
                             except Exception  as e:
                                 img_src = None
                             dprice = data.select_one("div > div.detailInfo > div.priceWrap > div.price > strong").get_text()
+                            dprice =  re.sub(r"[^0-9]", "", dprice)
                             buyer = data.select_one("div > div.detailInfo > div.prodScoreWrap > span:nth-child(3)").get_text()
                             buyer = re.sub(r"[^0-9]", "", buyer)
                             categoryName = categories[idx]
 
-                            print("prdName", name)
-                            print("web_url", "https://front.homeplus.co.kr"+ web_url)
-                            print("img_src", img_src)
-                            print("category", categoryName)
-                            print("dprice", dprice)
-                            print("buyerNum", buyer)
+                            data = {}
+                            data["imgSrc" ] =img_src
+                            data["prdName" ] = name
+                            data["webUrl" ] = "https://front.homeplus.co.kr" +web_url
+                            data["price"] = dprice
+                            data["purchase"]  = int(buyer)
+                            data["cat"] = categoryName
+                            self.pushData(data)
                         except Exception as e:
                             print("",e)
                         print(cnt)
                         print("=====================================e")
             except Exception as e:
-                continue
+                continue 
         return cnt
 
 
-
-       # 1번 #mdPrd > div.viewtype3.list_htype3.ui_templateContent > div.virtual-wrap > div > ul
-       # 2번 #mdPrd > div.viewtype3.list_htype3.ui_templateContent > div.virtual-wrap > div > ul
-
-       # 1번 li태그  # /html/body/div[2]/div[3]/div/div/div[2]/div[2]/div[1]/div/ul
-       # 2번 li태그    /html/body/div[2]/div[3]/div/div/div[2]/div[2]/div[3]/div/ul/li[1]
-       # 식품 종류 태그 
-       # /html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul/li[1] ~[5]
-       
+    def pushData(self, data):
+        sql = "insert into homeplus_product(imgsrc, prdname, weburl, purchase, cat, price) values (%s, %s, %s, %s, %s, %s)".format()
+        print(data)
+        self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
+        self.con.commit()  
         
 
 

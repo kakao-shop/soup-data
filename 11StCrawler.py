@@ -35,7 +35,7 @@ class st11_crawling:
         # self.chrome_options.add_argument('--disable-dev-shm-usage') # 서버컴 전용 옵션
         self.chrome_options.add_argument('window-size=1280,1000')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
-        
+        self.category = []
         self.titleList = []
         self.cnt = 0
     
@@ -78,37 +78,36 @@ class st11_crawling:
         cnt =0
         liList = soup.select("#dealPrdListing")
         for i, items in enumerate(liList):
-            try:
-                for item in items:
-                    for data in item:
-                        # print(data)
-                        cnt +=1
-                        print("=====================================s")
-                        try:
-                            name_url = eval(data.select_one("li > div > a")["data-log-body"])
-                            web_url = data.select_one("li > div > a")["href"]
-                            img_src = data.select_one("li > div > a> div.prd_img > img")["src"]
-                            categoryName = data.select_one("li > div > div> a").get_text()
-                            purchases = data.select_one("li > div > a > div.prd_info > span").get_text()
-                            self.category.append(categoryName)
-                            print("name", name_url["content_name"])
-                            print("img_src", img_src)
-                            print("web_url", web_url)
-                            print("categoryName", categoryName)
-                            print("last_discount_price", name_url["last_discount_price"])
-                            if purchases == "추천상품":
-                                print("0")
-                            else:
-                                print("purchases",purchases)
+            
+            for item in items:
+                for data in item:
+                    # print(data)
+                    cnt +=1
+                    print("=====================================s")
+                    try:
+                        name_url = eval(data.select_one("li > div > a")["data-log-body"])
+                        web_url = data.select_one("li > div > a")["href"]
+                        img_src = data.select_one("li > div > a> div.prd_img > img")["src"]
+                        categoryName = data.select_one("li > div > div> a").get_text()
+                        purchases = data.select_one("li > div > a > div.prd_info > span").get_text()
+                        self.category.append(categoryName)
+                        print("name", name_url["content_name"])
+                        print("img_src", img_src)
+                        print("web_url", web_url)
+                        print("categoryName", categoryName)
+                        print("last_discount_price", name_url["last_discount_price"])
+                        if purchases == "추천상품":
+                            print("0")
+                        else:
+                            print("purchases",purchases)
 
-                            # url = data.select_one("li > div > a")["href"]
-                            # print(url)
-                        except Exception as e:
-                            print(e, " ???? ")
-                        #print(cnt, data)
-                        print("=====================================e")
-            except Exception as e:
-                continue
+                        # url = data.select_one("li > div > a")["href"]
+                        # print(url)
+                    except Exception as e:
+                        print(e, " ???? ")
+                    #print(cnt, data)
+                    print("=====================================e")
+            
         return cnt
 
 

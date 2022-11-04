@@ -11,8 +11,8 @@ from kafka import KafkaProducer
 import json
 from json import dumps
 import sys
-
-
+import pymysql
+import pandas as pd
 
 def __main__ ():
 
@@ -22,10 +22,16 @@ def __main__ ():
 
 #--------------크롤링 시작 ------------------------------   
 
+
+
+
 class kakao_crawling:
     def __init__(self):
         # self.host = '127.0.0.1'
         # self.kafka_port = '9092'
+        self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
+                       db='product_test', charset='utf8')
+        self.cur = self.con.cursor()
         self.driver_path = "./chromedriver.exe"
         # self.keyword=keyword
         #  C:/Users/kjh19/OneDrive/바탕 화면/test/chromedriver.exe // 노트북
@@ -39,32 +45,22 @@ class kakao_crawling:
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
         self.titleList = []
         self.infolist = []
-        self.siteList = [
-"https://store.kakao.com/category/3/102104103?level=2",
-"https://store.kakao.com/category/3/102104101?level=2" ,
-"https://store.kakao.com/category/3/102104107?level=2" ,
-"https://store.kakao.com/category/3/102104108?level=2",
-"https://store.kakao.com/category/3/102104106?level=2" ,
-"https://store.kakao.com/category/3/102100?level=1" ,
-"https://store.kakao.com/category/3/102104105?level=2", 
-"https://store.kakao.com/category/3/102100100?level=2" ,
-"https://store.kakao.com/category/3/102101110?level=2" ,
-"https://store.kakao.com/category/3/102109100?level=2" ,
-"https://store.kakao.com/category/3/102109103?level=2" ,
-"https://store.kakao.com/category/3/102100118?level=2" ,
-"https://store.kakao.com/category/3/102100111?level=2" ,
-"https://store.kakao.com/category/3/102100101?level=2" ,
-"https://store.kakao.com/category/3/102101?level=1" 
-        ]
-        self.cat = [
-"과일",
-"채소",
-"쌀・잡곡",
-"축산",
-"수산・건어물",
-"유제품・냉장/냉동식품",
-"제과・양산빵",
-"면류・양념・오일"
+        self.siteList = [                       
+            ["https://store.kakao.com/category/3/102104103?level=2", "과일"],
+            ["https://store.kakao.com/category/3/102104102?level=2" , "채소"],
+            ["https://store.kakao.com/category/3/102104107?level=2","쌀/잡곡"],
+            ["https://store.kakao.com/category/3/102104108?level=2","축산"],
+            ["https://store.kakao.com/category/3/102104106?level=2","축산"],
+            ["https://store.kakao.com/category/3/102100?level=1","축산"],
+            ["https://store.kakao.com/category/3/102104105?level=2", "수산/건어물"] ,
+            ["https://store.kakao.com/category/3/102100100?level=2", "유제품/냉동식품"],
+            ["https://store.kakao.com/category/3/102101110?level=2", "유제품/냉동식품"],
+            ["https://store.kakao.com/category/3/102109100?level=2" ,"제과"],
+            ["https://store.kakao.com/category/3/102109103?level=2" ,"제과"],
+            ["https://store.kakao.com/category/3/102100118?level=2" , "즉석식품/조미료"],
+            ["https://store.kakao.com/category/3/102100111?level=2", "즉석식품/조미료"],
+            ["https://store.kakao.com/category/3/102100101?level=2", "즉석식품/조미료"],
+            [ "https://store.kakao.com/category/3/102101?level=1", ",물/음료"]
         ]
 
         self.cnt = 0
@@ -75,14 +71,13 @@ class kakao_crawling:
 
         soup=""
         for site in self.siteList:
-            self.driver.get(site)
+            self.driver.get(site[0])
             time.sleep(1)
             self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/div/fu-pw-category-result/div/div/cu-pagination-list/div/div[1]/div[1]/input").click()
-
-            time.sleep(2)
+            time.sleep(1)
             html = self.driver.page_source
             soup = BeautifulSoup(html)
-            self.getData(soup)
+            self.getData(soup, site[1])
             time.sleep(2)
             while True:
                 try:
@@ -91,9 +86,8 @@ class kakao_crawling:
                         time.sleep(2)
                         html = self.driver.page_source
                         soup = BeautifulSoup(html)
-                        a_cnt = self.getData(soup)
+                        a_cnt = self.getData(soup, site[1])
                         if a_cnt == "duplicate":
-                            print(a_cnt) 
                             break
                         time.sleep(2)
                 except Exception as e:
@@ -103,21 +97,18 @@ class kakao_crawling:
                     time.sleep(2)
                     html = self.driver.page_source
                     soup = BeautifulSoup(html)
-                    a_cnt = self.getData(soup)
+                    print("????????????????????",site[1])
+                    a_cnt = self.getData(soup, site[1])
                     if a_cnt == "duplicate": break
                     time.sleep(2)
                 except Exception as e:
                     break
 
-            print(site, "정상종료")
+            print(site[0], "정상종료")
 
-
-
-#mArticle > div > cu-pagination-list > div > fu-view-product-section > div > ul
-
-    def getData(self, soup):
+    def getData(self, soup, cat):
         # print((soup.prettify()))
-        cnt =0
+        cnt =0                                                                                                                                                                                                                                                                              
         liList = soup.select("ul.list_productcmp")
         if liList == []:
            print("    xxxx     ", liList)
@@ -135,23 +126,37 @@ class kakao_crawling:
                     self.titleList.append(prdName)
                 webUrl = item.select_one("li div > span > a")["href"]
                 price = item.select_one("li > fu-view-product > div > span > a > div > span.price_info > span.txt_number").get_text()
-            
+                price = int(re.sub(r"[^0-9]", "", price))
+                # try:
+                purchase = item.select("li > fu-view-product > div > span > a > div > span.other_info > em > span")
+                purch=list(purchase)
+                # print(type(purchase),purchase, purchase[1])
                 try:
-                    purchase = item.select_one("li) > fu-view-product > div > span > a > div > span.other_info > em > span.txt_info")
-                    
+                    purch = int(re.sub(r"[^0-9]", "", str(purch[1])))
                 except Exception as e:
-                    purchase = 0
+                    purch =0
                 print("imgSrc : ", imgSrc)
                 print("prdName : ", prdName)
                 print("webUrl : ", webUrl)
-                print("price : ", price)
-                print("purchase : ", purchase)
+                print("price : ", type(price), price)
+                print("purchase : ", purch)
+                print("cat :", cat)
                 print("=====================================e")
-        
+                data = {}
+                data["imgSrc" ] =imgSrc
+                data["prdName" ] = prdName
+                data["webUrl" ] = webUrl
+                data["price"] = price
+                data["purchase"]  = int(purch)
+                data["cat"] = cat
+                self.pushData(data)
         return cnt
 
-
-
+    def pushData(self, data):
+        sql = "insert into kko_product(imgsrc, prdname, weburl, purchase, cat, price) values (%s, %s, %s, %s, %s, %s)"
+        print(data)
+        self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
+        self.con.commit()
             
     
 
