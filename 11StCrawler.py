@@ -12,7 +12,7 @@ import json
 from json import dumps
 import sys
 
-
+import pymysql
 
 def __main__ ():
     
@@ -27,8 +27,9 @@ class st11_crawling:
         # self.kafka_port = '9092'
         self.driver_path = "./chromedriver.exe"
         #  C:/Users/kjh19/OneDrive/바탕 화면/test/chromedriver.exe // 노트북
-        # ./chromedriver (2).exe  // 연구실 컴
-        # /home/search/apps/dw/chromedriver 서버컴
+        self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
+                       db='product_test', charset='utf8')
+        self.cur = self.con.cursor()
         self.chrome_options = Options()
         # self.chrome_options.add_argument('--headless')
         # self.chrome_options.add_argument('--no-sandbox')
@@ -91,15 +92,26 @@ class st11_crawling:
                         categoryName = data.select_one("li > div > div> a").get_text()
                         purchases = data.select_one("li > div > a > div.prd_info > span").get_text()
                         self.category.append(categoryName)
+
                         print("name", name_url["content_name"])
                         print("img_src", img_src)
                         print("web_url", web_url)
                         print("categoryName", categoryName)
                         print("last_discount_price", name_url["last_discount_price"])
                         if purchases == "추천상품":
-                            print("0")
+                            purchases = "0"
                         else:
                             print("purchases",purchases)
+
+                        data = {}
+                        data["imgSrc" ] =img_src
+                        data["prdName" ] = name_url["content_name"]
+                        data["webUrl" ] = "https://front.homeplus.co.kr" +web_url
+                        data["price"] = int(re.sub(r"[^0-9]", "", name_url["last_discount_price"]))  
+                        data["purchase"]  = int(re.sub(r"[^0-9]", "", purchases))
+                        data["cat"] = categoryName
+                        self.pushData(data)
+
 
                         # url = data.select_one("li > div > a")["href"]
                         # print(url)
@@ -110,7 +122,11 @@ class st11_crawling:
             
         return cnt
 
-
+    def pushData(self, data):
+        sql = "insert into 11st_product(imgsrc, prdname, weburl, purchase, cat, price) values (%s, %s, %s, %s, %s, %s)"
+        print(data)
+        self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
+        self.con.commit()
 
        # 1번 #mdPrd > div.viewtype3.list_htype3.ui_templateContent > div.virtual-wrap > div > ul
        # 2번 #mdPrd > div.viewtype3.list_htype3.ui_templateContent > div.virtual-wrap > div > ul
