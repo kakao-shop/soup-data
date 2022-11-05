@@ -110,6 +110,25 @@ class st11_crawling:
                         data["price"] = int(re.sub(r"[^0-9]", "", name_url["last_discount_price"]))  
                         data["purchase"]  = int(re.sub(r"[^0-9]", "", purchases))
                         data["cat"] = categoryName
+                        if categoryName == "채소류":
+                            data["cat"] = "채소"
+                        elif categoryName == "과일/견과":
+                            data["cat"] = "과일"
+                        elif categoryName == "축산물":
+                            data["cat"] = "축산"
+                        elif categoryName in [ "차/전통음료", "커피", "전통주", "생수/음료"]:
+                            data["cat"] = "물/음료"
+                        elif categoryName == "우유/두유":
+                            data["cat"] = "유제품"
+                        elif categoryName == "라면/즉석식품":
+                            data["cat"] = "면"
+                        elif categoryName == "쌀/잡곡류":
+                            data["cat"] = "쌀/잡곡"
+                        elif categoryName == "수산물":
+                            data["cat"] = "수산/건어물"
+                        elif categoryName == "과자/간식":
+                            data["cat"] = "제과"
+                        else: continue
                         self.pushData(data)
 
 
