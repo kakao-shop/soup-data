@@ -116,18 +116,18 @@ class st11_crawling:
                             data["cat"] = "과일"
                         elif categoryName == "축산물":
                             data["cat"] = "축산"
-                        elif categoryName in [ "차/전통음료", "커피", "전통주", "생수/음료"]:
-                            data["cat"] = "물/음료"
+                        elif categoryName in [ "차/전통음료", "커피", "전통주", "생수/음료","홍삼/건강즙"]:
+                            data["cat"] = "생수/음료/커피"
                         elif categoryName == "우유/두유":
-                            data["cat"] = "유제품"
-                        elif categoryName == "라면/즉석식품":
-                            data["cat"] = "면"
+                            data["cat"] = "유제품/냉장/냉동"
+                        elif categoryName in ["라면/즉석식품","조미료/소스류","통조림/식용유/잼"]:
+                            data["cat"] = "면류/즉석식품/양념/오일"
                         elif categoryName == "쌀/잡곡류":
                             data["cat"] = "쌀/잡곡"
                         elif categoryName == "수산물":
                             data["cat"] = "수산/건어물"
                         elif categoryName == "과자/간식":
-                            data["cat"] = "제과"
+                            data["cat"] = "제과/빵"
                         else: continue
                         self.pushData(data)
 

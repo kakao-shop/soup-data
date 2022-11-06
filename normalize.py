@@ -27,6 +27,7 @@ class NormScore:
             sql = "update {0} set {1}.score =purchase*%s where cat=%s".format(site,site)
             self.cur.execute(sql, ( 1/i[1],i[0]))
             self.con.commit()
+    
             
     
 

@@ -46,7 +46,7 @@ class st11_crawling:
         time.sleep(1)
         cnt = 0
         idx = 0
-        for i in range(2,10):
+        for i in range(2,11 ):
             print("/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/ul/li[{}]".format(str(i)))
             try:
                 self.driver.find_element_by_xpath("/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/ul/li[{}]/button".format(str(i))).click()
@@ -77,7 +77,7 @@ class st11_crawling:
 
     def getData(self, soup, idx):
         cnt =0
-        categories = ['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품/냉동식품','제과','즉석식품/조미료','물/음료']
+        categories =['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품/냉장/냉동','제과/빵','면류/즉석식품/양념/오일','생수/음료/커피']
         liList = soup.select(".itemListWrap")
         for items in liList:
             try:
@@ -87,7 +87,11 @@ class st11_crawling:
                         cnt +=1
                         print("=====================================s")
                         try:
-                            name = data.select_one("div > div.detailInfo > a > p").get_text()
+                            name = data.select("div > div.detailInfo > a > p")
+                            if len(name) >= 2:
+                                name = data.select_one("div > div.detailInfo > a > p:nth-child(2)").get_text()
+                            else:
+                                name = data.select_one("div > div.detailInfo > a > p").get_text()
                             web_url = data.select_one("div > div.detailInfo > a")["href"]
                             try:
                                 img_src = data.select_one("div > div.thumbWrap > button > span > img")["src"]

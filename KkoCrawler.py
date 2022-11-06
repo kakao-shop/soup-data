@@ -47,20 +47,46 @@ class kakao_crawling:
         self.infolist = []
         self.siteList = [                       
             ["https://store.kakao.com/category/3/102104103?level=2", "과일"],
-            ["https://store.kakao.com/category/3/102104102?level=2" , "채소"],
-            ["https://store.kakao.com/category/3/102104107?level=2","쌀/잡곡"],
+            
+            ["https://store.kakao.com/category/3/102104101?level=2" , "채소"],
+            ["https://store.kakao.com/category/3/102104110?level=2","채소"],
+            ["https://store.kakao.com/category/3/102100123?level=2","채소"],
+
+            ["https://store.kakao.com/category/3/102104104?level=2","축산"],
             ["https://store.kakao.com/category/3/102104108?level=2","축산"],
             ["https://store.kakao.com/category/3/102104106?level=2","축산"],
-            ["https://store.kakao.com/category/3/102100?level=1","축산"],
-            ["https://store.kakao.com/category/3/102104105?level=2", "수산/건어물"] ,
-            ["https://store.kakao.com/category/3/102100100?level=2", "유제품/냉동식품"],
-            ["https://store.kakao.com/category/3/102101110?level=2", "유제품/냉동식품"],
-            ["https://store.kakao.com/category/3/102109100?level=2" ,"제과"],
-            ["https://store.kakao.com/category/3/102109103?level=2" ,"제과"],
-            ["https://store.kakao.com/category/3/102100118?level=2" , "즉석식품/조미료"],
-            ["https://store.kakao.com/category/3/102100111?level=2", "즉석식품/조미료"],
-            ["https://store.kakao.com/category/3/102100101?level=2", "즉석식품/조미료"],
-            [ "https://store.kakao.com/category/3/102101?level=1", ",물/음료"]
+            ["https://store.kakao.com/category/3/102104114?level=2","축산"],
+
+            ["https://store.kakao.com/category/3/102104105?level=2", "수산/건어물"] , 
+            ["https://store.kakao.com/category/3/102104109?level=2", "수산/건어물"],
+            ["https://store.kakao.com/category/3/102104117?level=2", "수산/건어물"],
+
+            ["https://store.kakao.com/category/3/102104102?level=2","유제품/냉장/냉동"],
+            ["https://store.kakao.com/category/3/102104100?level=2", "유제품/냉장/냉동"],
+            ["https://store.kakao.com/category/3/102100100?level=2" ,"유제품/냉장/냉동"],
+            ["https://store.kakao.com/category/3/102100112?level=2" ,"유제품/냉장/냉동"],
+            ["https://store.kakao.com/category/3/102100118?level=2" , "유제품/냉장/냉동"],
+            ["https://store.kakao.com/category/3/102100111?level=2", "유제품/냉장/냉동"],
+
+            ["https://store.kakao.com/category/3/102109?level=1", "제과/빵"],
+
+            [ "https://store.kakao.com/category/3/102100101?level=2", "면류/즉석식품/양념/오일"],
+            [ "https://store.kakao.com/category/3/102100103?level=2", "면류/즉석식품/양념/오일"],
+            [ "https://store.kakao.com/category/3/102100104?level=2", "면류/즉석식품/양념/오일"],
+            [ "https://store.kakao.com/category/3/102100105?level=2", "면류/즉석식품/양념/오일"],
+            [ "https://store.kakao.com/category/3/102100109?level=2", "면류/즉석식품/양념/오일"],
+            [ "https://store.kakao.com/category/3/102100111?level=2", "면류/즉석식품/양념/오일"],
+            [ "https://store.kakao.com/category/3/102100110?level=2", "면류/즉석식품/양념/오일"],
+            [ "https://store.kakao.com/category/3/102100141?level=2", "면류/즉석식품/양념/오일"],
+            [ "https://store.kakao.com/category/3/102100124103?level=3", "면류/즉석식품/양념/오일"],
+            [ "https://store.kakao.com/category/3/102104116?level=2", "면류/즉석식품/양념/오일"],
+
+            [ "https://store.kakao.com/category/3/102104107?level=2", "쌀/잡곡"],
+            [ "https://store.kakao.com/category/3/102100119?level=2", "쌀/잡곡"],
+            [ "https://store.kakao.com/category/3/102104115?level=2", "쌀/잡곡"],
+            [ "https://store.kakao.com/category/3/102104129?level=2", "쌀/잡곡"],
+
+            [ "https://store.kakao.com/category/3/102101?level=1", "생수/음료/커피"]
         ]
 
         self.cnt = 0
