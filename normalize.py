@@ -1,4 +1,6 @@
 import pymysql
+from pymongo import MongoClient
+
 
 def __main__ ():
     trigger = NormScore()
@@ -9,6 +11,7 @@ def __main__ ():
 
 class NormScore:
     def __init__(self):
+        self.client =  MongoClient('203.255.92.141:27017', connect=False)
         self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
                        db='product_test', charset='utf8')
         self.cur = self.con.cursor()
@@ -18,6 +21,7 @@ class NormScore:
     def startNorm(self,site):
         print("start : ", site)
         sql = "select cat, max(purchase) from {} group by cat".format(site)
+        sql2 = "insert into integration_product values(%d,%d,%d,%d,%d,%d,%d,%d)".format(site)
         self.cur.execute(sql)
         
         data =  self.cur.fetchall()

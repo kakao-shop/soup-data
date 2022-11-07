@@ -12,6 +12,9 @@ from kafka import KafkaProducer
 import json
 from json import dumps
 import sys
+from pymongo import MongoClient
+
+
 
 
 #--------------------------홈플러스 크롤링----------------------------
@@ -23,8 +26,13 @@ def __main__ ():
 
 class st11_crawling:
     def __init__(self):
-        # self.host = '127.0.0.1'
-        # self.kafka_port = '9092'
+        self.host = '127.0.0.1'
+        self.kafka_port = '9092'
+        producer=KafkaProducer(acks=0, 
+            compression_type='gzip',
+            bootstrap_servers=[self.host + self.kafka_port],
+            value_serializer=lambda x: dumps(x).encode('utf-8')
+          )
         self.driver_path = "./chromedriver.exe"
         
         self.chrome_options = Options()
@@ -128,6 +136,8 @@ class st11_crawling:
        # 식품 종류 태그 
        # /html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul/li[1] ~[5]
        
+    def normalize(self):
+        print("start norm")
         
 
 

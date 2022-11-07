@@ -12,6 +12,10 @@ import json
 from json import dumps
 import sys
 import pymysql
+from pymongo import MongoClient
+
+
+
 
 #--------------------------홈플러스 크롤링----------------------------
 def __main__ ():
@@ -22,8 +26,13 @@ def __main__ ():
 
 class st11_crawling:
     def __init__(self):
-        # self.host = '127.0.0.1'
-        # self.kafka_port = '9092'
+        self.host = '127.0.0.1'
+        self.kafka_port = '9092'
+        self.producer=KafkaProducer(acks=0, 
+            compression_type='gzip',
+            bootstrap_servers=[self.host + ":"+ self.kafka_port],
+            value_serializer=lambda x: dumps(x).encode('utf-8')
+          )
         self.driver_path = "./chromedriver.exe"
         self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
                        db='product_test', charset='utf8')
@@ -110,7 +119,8 @@ class st11_crawling:
                             data["price"] = dprice
                             data["purchase"]  = int(buyer)
                             data["cat"] = categoryName
-                            self.pushData(data)
+                            kafka={"data":data}
+                            self.pushData(kafka)
                         except Exception as e:
                             print("",e)
                         print(cnt)
@@ -121,10 +131,13 @@ class st11_crawling:
 
 
     def pushData(self, data):
-        sql = "insert into homeplus_product(imgsrc, prdname, weburl, purchase, cat, price) values (%s, %s, %s, %s, %s, %s)".format()
-        print(data)
-        self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
-        self.con.commit()  
+        self.producer.send("home-test",value=data)
+        self.producer.flush()
+        
+        # sql = "insert into homeplus_product(imgsrc, prdname, weburl, purchase, cat, price) values (%s, %s, %s, %s, %s, %s)".format()
+        # print(data)
+        # self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
+        # self.con.commit()  
         
 
 
