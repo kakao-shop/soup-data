@@ -11,7 +11,7 @@ from kafka import KafkaProducer
 import json
 from json import dumps
 import sys
-
+from pymongo import MongoClient
 import pymysql
 
 def __main__ ():
@@ -23,8 +23,16 @@ def __main__ ():
 
 class st11_crawling:
     def __init__(self):
-        # self.host = '127.0.0.1'
-        # self.kafka_port = '9092'
+
+        self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
+        self.homeplus = self.client["DATAETL"]['Street']
+        self.host = '127.0.0.1'
+        self.kafka_port = '9092'
+        self.producer=KafkaProducer(acks=0, 
+            compression_type='gzip',
+            bootstrap_servers=[self.host + ":"+ self.kafka_port],
+            value_serializer=lambda x: dumps(x).encode('utf-8')
+          )
         self.driver_path = "./chromedriver.exe"
         #  C:/Users/kjh19/OneDrive/바탕 화면/test/chromedriver.exe // 노트북
         self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
@@ -70,9 +78,10 @@ class st11_crawling:
             soup = BeautifulSoup(html, 'html.parser')
             a_cnt = self.getData(soup)
             cnt += a_cnt
-        print(cnt)
-        print(len(list(set(self.category))))
         print(set(self.category))
+    
+        print("crawler finish")
+        self.normalize()
 
 
     def getData(self, soup):
@@ -129,7 +138,8 @@ class st11_crawling:
                         elif categoryName == "과자/간식":
                             data["cat"] = "제과/빵"
                         else: continue
-                        self.pushData(data)
+                        kafka={"data":data}
+                        self.pushData(kafka)
 
 
                         # url = data.select_one("li > div > a")["href"]
@@ -142,18 +152,22 @@ class st11_crawling:
         return cnt
 
     def pushData(self, data):
-        sql = "insert into 11st_product(imgsrc, prdname, weburl, purchase, cat, price) values (%s, %s, %s, %s, %s, %s)"
-        print(data)
-        self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
-        self.con.commit()
+        self.producer.send("11st-test",value=data)
+        self.producer.flush()
 
-       # 1번 #mdPrd > div.viewtype3.list_htype3.ui_templateContent > div.virtual-wrap > div > ul
-       # 2번 #mdPrd > div.viewtype3.list_htype3.ui_templateContent > div.virtual-wrap > div > ul
-
-       # 1번 li태그  # /html/body/div[2]/div[3]/div/div/div[2]/div[2]/div[1]/div/ul
-       # 2번 li태그    /html/body/div[2]/div[3]/div/div/div[2]/div[2]/div[3]/div/ul/li[1]
-       # 식품 종류 태그 
-       # /html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul/li[1] ~[5]
+    def normalize(self):
+        print("start normalize")
+        for i in self.homeplus.find().sort([("purchase",-1)]).limit(1): 
+            self.homeplus.update_many({},[
+            {"$set":
+                {"score":
+                    {"$multiply":
+                        ["$purchase", 1/i["purchase"]] 
+                    }
+                }
+                }]
+            )
+        print("end normalize")
        
         
 

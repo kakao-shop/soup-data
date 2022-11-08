@@ -33,6 +33,8 @@ class st11_crawling:
             bootstrap_servers=[self.host + ":"+ self.kafka_port],
             value_serializer=lambda x: dumps(x).encode('utf-8')
           )
+        self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
+        self.homeplus = self.client["DATAETL"]['Homeplus']
         self.driver_path = "./chromedriver.exe"
         self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
                        db='product_test', charset='utf8')
@@ -81,7 +83,8 @@ class st11_crawling:
             a_cnt = self.getData(soup, idx)
             cnt += a_cnt
             idx += 1
-        print(cnt)
+        print("crawler finish")
+        self.normalize()
 
 
     def getData(self, soup, idx):
@@ -138,6 +141,21 @@ class st11_crawling:
         # print(data)
         # self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
         # self.con.commit()  
+    
+    def normalize(self):
+        print("start normalize")
+        for i in self.homeplus.find().sort([("purchase",-1)]).limit(1): 
+            self.homeplus.update_many({},[
+            {"$set":
+                {"score":
+                    {"$multiply":
+                        ["$purchase", 1/i["purchase"]] 
+                    }
+                }
+                }]
+            )
+        print("end normalize")
+
         
 
 

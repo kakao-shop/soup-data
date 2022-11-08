@@ -27,8 +27,15 @@ def __main__ ():
 
 class kakao_crawling:
     def __init__(self):
-        # self.host = '127.0.0.1'
-        # self.kafka_port = '9092'
+        self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
+        self.homeplus = self.client["DATAETL"]['Kakao']
+        self.host = '127.0.0.1'
+        self.kafka_port = '9092'
+        self.producer=KafkaProducer(acks=0, 
+            compression_type='gzip',
+            bootstrap_servers=[self.host + ":"+ self.kafka_port],
+            value_serializer=lambda x: dumps(x).encode('utf-8')
+          )
         self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
                        db='product_test', charset='utf8')
         self.cur = self.con.cursor()
@@ -131,6 +138,9 @@ class kakao_crawling:
                     break
 
             print(site[0], "정상종료")
+        
+        print("crawler finish")
+        self.normalize()
 
     def getData(self, soup, cat):
         # print((soup.prettify()))
@@ -175,16 +185,32 @@ class kakao_crawling:
                 data["price"] = price
                 data["purchase"]  = int(purch)
                 data["cat"] = cat
-                self.pushData(data)
+                kafka={"data":data}
+                self.pushData(kafka)
         return cnt
 
     def pushData(self, data):
-        sql = "insert into kko_product(imgsrc, prdname, weburl, purchase, cat, price) values (%s, %s, %s, %s, %s, %s)"
-        print(data)
-        self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
-        self.con.commit()
+        self.producer.send("kakao-test",value=data)
+        self.producer.flush()
+        
+        # sql = "insert into kko_product(imgsrc, prdname, weburl, purchase, cat, price) values (%s, %s, %s, %s, %s, %s)"
+        # print(data)
+        # self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
+        # self.con.commit()
             
-    
+    def normalize(self):
+        print("start normalize")
+        for i in self.homeplus.find().sort([("purchase",-1)]).limit(1): 
+            self.homeplus.update_many({},[
+            {"$set":
+                {"score":
+                    {"$multiply":
+                        ["$purchase", 1/i["purchase"]] 
+                    }
+                }
+                }]
+            )
+        print("end normalize")
 
 
 
