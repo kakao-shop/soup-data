@@ -13,7 +13,7 @@ from json import dumps
 import sys
 import pymysql
 import pandas as pd
-
+from pymongo import MongoClient
 def __main__ ():
 
     # a = sys.argv[1]  

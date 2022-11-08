@@ -631,8 +631,14 @@ class Classifier:
     # 과일
     def fruit(self, string):     
         # 귤
-        for i in ["귤", "밀감", "낑", "낑깡", "밀감", "오렌지"]:  
+        for i in ["귤", "밀감", "낑", "낑깡", "밀감"]:  
+            if i in string: return "귤"
+        #오렌지
+        for i in ["오렌지"]:  
             if i in string: return "오렌지"
+        #사과
+        for i in ["사과"]:  
+            if i in string: return "사과"
         # 감/홍시
         for i in ["감", "홍시", "단감"]:  
             if i in string: return "감/홍시"
@@ -646,7 +652,7 @@ class Classifier:
         for i in ["베리", "오미자"]:  
             if i in string: return "베리류"
         # 포도         
-        for i in ["샤인머스켓", "샤인머스캣", "포도", "거봉", "머스켓"]:  
+        for i in ["머스켓", "머스캣","머스킷", "포도", "거봉", "머스켓"]:  
             if i in string: return "포도"
         # 참외         
         for i in ["참외"]:  
