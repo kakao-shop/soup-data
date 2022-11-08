@@ -20,7 +20,7 @@ ruleBaseClassifier = RuleBaseClassifier.Classifier()
 cvect = CountVectorizer()
 
 client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
-homeplus = client["DATAETL"]['Street']
+homeplus = client["DATAETL"]['BundledSite']
 consumer=KafkaConsumer("11st-test", 
                         bootstrap_servers=['127.0.0.1:9092'], 
                         auto_offset_reset="earliest",
@@ -53,7 +53,7 @@ while True:
             data['subcat']=ruleBaseClassifier.water(data["prdName"])
         elif data["cat"] =="유제품/냉장/냉동":
             data['subcat']=ruleBaseClassifier.mik_ref(data["prdName"])
-        elif data["cat"] =="면류/양념/오일":
+        elif data["cat"] =="면류/즉석식품/양념/오일":
             data['subcat']=ruleBaseClassifier.retro(data["prdName"])
         elif data["cat"] =="쌀/잡곡":
             data['subcat']=ruleBaseClassifier.ssal(data["prdName"])
@@ -63,6 +63,7 @@ while True:
             data['subcat']=ruleBaseClassifier.fish(data["prdName"])
         elif data["cat"] =="과일":
             data['subcat']=ruleBaseClassifier.fruit(data["prdName"])
+        data["site"] ="street"
         data_list.append(data)
         print(data)
     try:
