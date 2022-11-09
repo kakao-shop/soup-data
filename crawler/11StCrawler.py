@@ -13,6 +13,7 @@ from json import dumps
 import sys
 from pymongo import MongoClient
 import pymysql
+from datetime import datetime
 
 def __main__ ():
     
@@ -24,8 +25,8 @@ def __main__ ():
 class st11_crawling:
     def __init__(self):
 
-        self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
-        self.homeplus = self.client["DATAETL"]['Street']
+        # self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
+        # self.homeplus = self.client["DATAETL"]['Street']
         self.host = '127.0.0.1'
         self.kafka_port = '9092'
         self.producer=KafkaProducer(acks=0, 
@@ -49,6 +50,11 @@ class st11_crawling:
         self.cnt = 0
     
     def start_crwal(self):
+        data = {}
+        data["index"]="product-"+datetime.now().strftime('%Y-%m-%d-%H-%M')
+        print(data)
+        self.producer.send("11st-test",value=data)
+        self.producer.flush()
         
         self.driver.get("https://deal.11st.co.kr/browsing/DealAction.tmall?method=getCategory&dispCtgrNo=947161")
         time.sleep(1)

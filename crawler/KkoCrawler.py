@@ -14,6 +14,12 @@ import sys
 import pymysql
 import pandas as pd
 from pymongo import MongoClient
+from datetime import datetime
+from ElasticsearchAPI import ElaAPI
+from elasticsearch import Elasticsearch, helpers
+
+
+
 def __main__ ():
 
     # a = sys.argv[1]  
@@ -36,10 +42,10 @@ class kakao_crawling:
             bootstrap_servers=[self.host + ":"+ self.kafka_port],
             value_serializer=lambda x: dumps(x).encode('utf-8')
           )
-        self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
-                       db='product_test', charset='utf8')
-        self.cur = self.con.cursor()
+        self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-%M')
         self.driver_path = "./chromedriver.exe"
+        self.elasticAPI = ElaAPI()
+        self.es = Elasticsearch(hosts="127.0.0.1", port=9200)
         # self.keyword=keyword
         #  C:/Users/kjh19/OneDrive/바탕 화면/test/chromedriver.exe // 노트북
         # ./chromedriver (2).exe  // 연구실 컴
@@ -51,32 +57,26 @@ class kakao_crawling:
         self.chrome_options.add_argument('window-size=1280,1000')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
         self.titleList = []
-        self.infolist = []
+        self.subList = ["과일", "채소", "채소", "축산","수산/건어물", "유제품/냉장/냉동", "제과/빵" , "면류/즉석식품/양념/오일", "쌀/잡곡", "생수/음료/커피"]
         self.siteList = [                       
             ["https://store.kakao.com/category/3/102104103?level=2", "과일"],
-            
             ["https://store.kakao.com/category/3/102104101?level=2" , "채소"],
             ["https://store.kakao.com/category/3/102104110?level=2","채소"],
             ["https://store.kakao.com/category/3/102100123?level=2","채소"],
-
             ["https://store.kakao.com/category/3/102104104?level=2","축산"],
             ["https://store.kakao.com/category/3/102104108?level=2","축산"],
             ["https://store.kakao.com/category/3/102104106?level=2","축산"],
             ["https://store.kakao.com/category/3/102104114?level=2","축산"],
-
             ["https://store.kakao.com/category/3/102104105?level=2", "수산/건어물"] , 
             ["https://store.kakao.com/category/3/102104109?level=2", "수산/건어물"],
             ["https://store.kakao.com/category/3/102104117?level=2", "수산/건어물"],
-
             ["https://store.kakao.com/category/3/102104102?level=2","유제품/냉장/냉동"],
             ["https://store.kakao.com/category/3/102104100?level=2", "유제품/냉장/냉동"],
             ["https://store.kakao.com/category/3/102100100?level=2" ,"유제품/냉장/냉동"],
             ["https://store.kakao.com/category/3/102100112?level=2" ,"유제품/냉장/냉동"],
             ["https://store.kakao.com/category/3/102100118?level=2" , "유제품/냉장/냉동"],
             ["https://store.kakao.com/category/3/102100111?level=2", "유제품/냉장/냉동"],
-
             ["https://store.kakao.com/category/3/102109?level=1", "제과/빵"],
-
             [ "https://store.kakao.com/category/3/102100101?level=2", "면류/즉석식품/양념/오일"],
             [ "https://store.kakao.com/category/3/102100103?level=2", "면류/즉석식품/양념/오일"],
             [ "https://store.kakao.com/category/3/102100104?level=2", "면류/즉석식품/양념/오일"],
@@ -99,9 +99,13 @@ class kakao_crawling:
         self.cnt = 0
     
     def start_crwal(self):
-        
-
-
+        data = {}
+        data["index"]=self.index_name
+        self.elasticAPI.createIndex(data["index"])
+        print(self.elasticAPI.allIndex())
+        print(data)
+        self.producer.send("kakao-test",value=data)
+        self.producer.flush()
         soup=""
         for site in self.siteList:
             self.driver.get(site[0])
@@ -140,6 +144,7 @@ class kakao_crawling:
             print(site[0], "정상종료")
         
         print("crawler finish")
+        time.sleep(1)
         self.normalize()
 
     def getData(self, soup, cat):
@@ -200,20 +205,121 @@ class kakao_crawling:
             
     def normalize(self):
         print("start normalize")
-        for i in self.homeplus.find().sort([("purchase",-1)]).limit(1): 
-            self.homeplus.update_many({},[
-            {"$set":
-                {"score":
-                    {"$multiply":
-                        ["$purchase", 1/i["purchase"]] 
+        for subcat in self.subList:
+            try:
+                res = es.search(
+                    index=self.index_name, 
+                    
+                    body={
+                        "size": 0,
+                        "query":{"match":{"site":"kakao" },
+                                "match":{"cat":subcat}},
+                        "aggs": {
+                            "test": {
+                            "max": { "field": "purchase"}
+                            }
                     }
-                }
-                }]
-            )
+                    }
+                )
+                print(res)
+                print(res["aggregations"]["test"]["value"])
+                print(subcat)
+                # 업데이트 쿼리
+                res2= es.update_by_query(
+                    index=self.index_name,  
+                    body = {
+                "query" :{
+                    "bool": {
+                            "must":[
+                            {"match": {"site": "kakao"}},
+                            { "match":{"cat":subcat}}
+                    ]
+                    }
+                }, 
+                "script": {
+                "source":"ctx._source.score =ctx._source.score + {};".format(str(int(res["aggregations"]["test"]["value"]))),
+                "lang": "painless"
+                }  }
+                )
+                print("res2", res2)
+            except Exception as e:
+                print(e)
         print("end normalize")
 
 
 
+
+
+
+
+es = Elasticsearch(hosts="127.0.0.1", port=9200)
+class ElaAPI:
+    
+       # 객체 생성
+    def srvHealthCheck(self):
+        health = es.cluster.health()
+        print (health)
+
+    def allIndex(self):
+        print (es.cat.indices())
+
+    def dataInsert(self, docs):
+        # ===============
+        # 데이터 삽입
+        # ===============
+        helpers.bulk(es, docs)
+
+    def searchAll(self, index):
+        res = es.search(
+            index = index, 
+            body = {
+                "query":{"match_all":{}}
+            }
+        )
+        print (json.dumps(res, ensure_ascii=False, indent=4))
+
+
+    def createIndex(self, date):
+        # ===============
+        # 인덱스 생성
+        # ===============
+        index = "product-" + date
+  
+        if es.indices.exists(index=index):
+            pass
+        else:
+            es.indices.create(
+            index = index,
+            body = {
+                "settings": {
+                    "analysis": {
+                        "analyzer": {
+                            "content": {
+                                "type": "custom",
+                                "tokenizer": "nori_tokenizer",
+                                "decompound_mode": "mixed"
+                                }
+      
+                        }
+                    }
+                },
+                "mappings": {
+                
+                        "properties": {
+                            "imgSrc":    {"type": "text"},
+                            "prdName": {"type": "text","analyzer": "content"},
+                            "webUrl":    {"type": "text"},
+                            "purchase":    {"type": "text"},
+                            "subcat":   {"type": "text"},
+                            "site":     {"type": "text"},
+                            "cat":   {"type": "text"},
+                            "price":     {"type": "integer"},
+                            "score":   {"type": "double"}
+                            }
+                        
+                    }
+                }
+            )
 
     
 

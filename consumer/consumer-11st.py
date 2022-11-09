@@ -3,9 +3,6 @@ from json import loads
 import time
 import datetime
 import joblib
-from pymongo import MongoClient
-from sklearn.feature_extraction.text import CountVectorizer
-import pandas as pd
 import RuleBaseClassifier
 # meat : 축산
 # veget : 채소
@@ -67,7 +64,6 @@ while True:
         data_list.append(data)
         print(data)
     try:
-        homeplus.insert_many(data_list)
         print("?")
     except:
         continue

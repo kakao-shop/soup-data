@@ -13,8 +13,8 @@ from json import dumps
 import sys
 import pymysql
 from pymongo import MongoClient
-
-
+from elasticsearch import Elasticsearch, helpers
+from datetime import datetime
 
 
 #--------------------------홈플러스 크롤링----------------------------
@@ -40,7 +40,7 @@ class st11_crawling:
                        db='product_test', charset='utf8')
         self.cur = self.con.cursor()
         self.chrome_options = Options()
-        
+        self.elasticAPI = ElaAPI()
         self.chrome_options.add_argument('window-size=1280,640')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
         self.author = {}
@@ -50,8 +50,17 @@ class st11_crawling:
         self.test = []
         self.infolist = []
         self.cnt = 0
-    
+        self.categories =['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품/냉장/냉동','제과/빵','면류/즉석식품/양념/오일','생수/음료/커피']
+        self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-%M')
+
     def homeplus_crwal(self):
+        data = {}
+        data["index"]=self.index_name
+        self.elasticAPI.createIndex(self.index_name)
+        print(self.elasticAPI.allIndex())
+        print(data)
+        self.producer.send("home-test",value=data)
+        self.producer.flush()
         
         self.driver.get("https://front.homeplus.co.kr/leaflet?gnbNo=201")
         time.sleep(1)
@@ -84,12 +93,11 @@ class st11_crawling:
             cnt += a_cnt
             idx += 1
         print("crawler finish")
-        self.normalize()
+        # self.normalize()
 
 
     def getData(self, soup, idx):
         cnt =0
-        categories =['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품/냉장/냉동','제과/빵','면류/즉석식품/양념/오일','생수/음료/커피']
         liList = soup.select(".itemListWrap")
         for items in liList:
             try:
@@ -113,7 +121,7 @@ class st11_crawling:
                             dprice =  re.sub(r"[^0-9]", "", dprice)
                             buyer = data.select_one("div > div.detailInfo > div.prodScoreWrap > span:nth-child(3)").get_text()
                             buyer = re.sub(r"[^0-9]", "", buyer)
-                            categoryName = categories[idx]
+                            categoryName = self.categories[idx]
 
                             data = {}
                             data["imgSrc" ] =img_src
@@ -144,19 +152,125 @@ class st11_crawling:
     
     def normalize(self):
         print("start normalize")
-        for i in self.homeplus.find().sort([("purchase",-1)]).limit(1): 
-            self.homeplus.update_many({},[
-            {"$set":
-                {"score":
-                    {"$multiply":
-                        ["$purchase", 1/i["purchase"]] 
+        for cat in self.categories:
+            try:
+                res = es.search(
+                    index=self.index_name, 
+                    
+                    body={
+                        "size": 0,
+                        "query":{"match":{"site":"home" },
+                                "match":{"cat":cat}},
+                        "aggs": {
+                            "test": {
+                            "max": { "field": "purchase"}
+                            }
                     }
-                }
-                }]
-            )
+                    }
+                )
+                print(res)
+                print(res["aggregations"]["test"]["value"])
+                print(cat)
+                # 업데이트 쿼리
+                res2= es.update_by_query(
+                    index=self.index_name,  
+                    body = {
+                "query" :{
+                    "bool": {
+                            "must":[
+                            {"match": {"site": "home"}},
+                            { "match":{"cat":cat}}
+                    ]
+                    }
+                }, 
+                "script": {
+                "source":"ctx._source.score =ctx._source.score * 1/{};".format(str(int(res["aggregations"]["test"]["value"]))),
+                "lang": "painless"
+                }  }
+                )
+                print("res2", res2)
+            except Exception as e:
+                print(e)
         print("end normalize")
 
-        
+
+
+
+
+
+
+es = Elasticsearch(hosts="127.0.0.1", port=9200)
+class ElaAPI:
+    
+       # 객체 생성
+    def srvHealthCheck(self):
+        health = es.cluster.health()
+        print (health)
+
+    def allIndex(self):
+        print (es.cat.indices())
+
+    def dataInsert(self, docs):
+        # ===============
+        # 데이터 삽입
+        # ===============
+        helpers.bulk(es, docs)
+
+    def searchAll(self, index):
+        res = es.search(
+            index = index, 
+            body = {
+                "query":{"match_all":{}}
+            }
+        )
+        print (json.dumps(res, ensure_ascii=False, indent=4))
+
+
+    def createIndex(self, date):
+        # ===============
+        # 인덱스 생성
+        # ===============
+        index = "product-" + date
+  
+        if es.indices.exists(index=index):
+            pass
+        else:
+            es.indices.create(
+            index = index,
+            body = {
+                "settings": {
+                    "analysis": {
+                        "analyzer": {
+                            "content": {
+                                "type": "custom",
+                                "tokenizer": "nori_tokenizer",
+                                "decompound_mode": "mixed"
+                                }
+      
+                        }
+                    }
+                },
+                "mappings": {
+                
+                        "properties": {
+                            "imgSrc":    {"type": "text"},
+                            "prdName": {"type": "text","analyzer": "content"},
+                            "webUrl":    {"type": "text"},
+                            "purchase":    {"type": "text"},
+                            "subcat":   {"type": "text"},
+                            "site":     {"type": "text"},
+                            "cat":   {"type": "text"},
+                            "price":     {"type": "integer"},
+                            "score":   {"type": "float"}
+                            }
+                        
+                    }
+                }
+            )
+
+    
+
+
 
 
 __main__()
