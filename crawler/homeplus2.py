@@ -48,11 +48,17 @@ class st11_crawling:
         self.categories =['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품/냉장/냉동','제과/빵','면류/즉석식품/양념/오일','생수/음료/커피']
         self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-%M')
 
+    def findIndexName(self):
+        now = datetime.now().minute
+        print("current minute", now)
+        if now < 29:
+            self.index_name ="product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"00"
+        else:
+            self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"30"
     def homeplus_crwal(self):
+        self.findIndexName()
         data = {}
         data["index"]=self.index_name
-        self.elasticAPI.createIndex(self.index_name)
-        print(self.elasticAPI.allIndex())
         print(data)
         self.producer.send("home-test",value=data)
         self.producer.flush()
@@ -88,7 +94,11 @@ class st11_crawling:
             cnt += a_cnt
             idx += 1
         print("crawler finish")
-        # self.normalize()
+        data = {}
+        data["finish"]=self.index_name
+        # self.elasticAPI.createIndex(data["index"])
+        self.producer.send("home-test",value=data)
+        self.producer.flush()
 
 
     def getData(self, soup, idx):

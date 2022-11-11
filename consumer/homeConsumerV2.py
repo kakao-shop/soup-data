@@ -84,10 +84,16 @@ def normalize(indexName):
                         index=indexName, 
                         
                         body={
-                            "size": 0,
-                            "query":{"match":{"site":"home" },
-                                    "match":{"cat":cat},
-                                    "match":{"subcat":subcat}},
+                            "size": 1,
+                            "query":
+                            {
+                                "bool": {
+                                    "must":[
+                                        {"match":{"site":"home" }},
+                                    {"match":{"cat":cat}},
+                                    {"match":{"subcat":subcat}}]
+                                }
+                            },
                             "aggs": {
                                 "test": {
                                 "max": { "field": "purchase"}
@@ -95,7 +101,7 @@ def normalize(indexName):
                         }
                         }
                     )
-                    print(res)
+                    print("??? : " ,res)
                     print(res["aggregations"]["test"]["value"])
                     print(subcat)
                     # 업데이트 쿼리
@@ -106,16 +112,17 @@ def normalize(indexName):
                         "bool": {
                                 "must":[
                                 {"match": {"site": "home"}},
-                                { "match":{"cat":subcat}}
+                                { "match":{"cat":cat}},
+                                {"match":{"subcat":subcat}}
                         ]
                         }
                     }, 
                     "script": {
-                    "source":"ctx._source.score =ctx._source.score + {};".format(str(int(res["aggregations"]["test"]["value"]))),
+                    "source":"ctx._source.score =ctx._source.score * {};".format(str(1/int(res["aggregations"]["test"]["value"]))),
                     "lang": "painless"
                     }  }
                     )
-                    print("res2", res2)
+                    print("norm res2", res2)
                 except Exception as e:
                     print(e)
         print("end normalize")
@@ -123,7 +130,7 @@ def normalize(indexName):
 
 
 
-def classifier(data):
+    def classifier(data):
     subcat = ""
     if data["cat"] =="축산":
         subcat =ruleBaseClassifier.meat(data["prdName"])
@@ -164,8 +171,8 @@ while True:
             print("es_index", es_index) 
             time.sleep(1)
             continue
-        elif "finish" in value:
-            res += 1
+        if "finish" in value:
+            res = 1
             break
         docs["_index"]= es_index
         data = value["data"]
@@ -177,6 +184,9 @@ while True:
  
     print(data_list)
     try:
+        if data_list ==[]: 
+            print("continue")
+            continue
         client.dataInsert(data_list)
         print("success insert")
     except:
@@ -199,7 +209,7 @@ def beforeTime(time):
     return "-".join(data)
 deleteIndexName = beforeTime(es_index)
 es.indices.delete(index=deleteIndexName, ignore=[400, 404])
-
+print(deleteIndexName)
 
 
 

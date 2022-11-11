@@ -11,8 +11,6 @@ from kafka import KafkaProducer
 import json
 from json import dumps
 import sys
-from pymongo import MongoClient
-import pymysql
 from datetime import datetime
 
 def __main__ ():
@@ -36,9 +34,7 @@ class st11_crawling:
           )
         self.driver_path = "./chromedriver.exe"
         #  C:/Users/kjh19/OneDrive/바탕 화면/test/chromedriver.exe // 노트북
-        self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
-                       db='product_test', charset='utf8')
-        self.cur = self.con.cursor()
+
         self.chrome_options = Options()
         # self.chrome_options.add_argument('--headless')
         # self.chrome_options.add_argument('--no-sandbox')
@@ -46,19 +42,21 @@ class st11_crawling:
         self.chrome_options.add_argument('window-size=1280,1000')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
         self.category = []
-        self.titleList = []
+        self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-%M')
+
         self.cnt = 0
     def findIndexName(self):
         now = datetime.now().minute
         print("current minute", now)
         if now < 29:
-            return "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"00"
+            self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"00"
         else:
-            return "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"30"
+            self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"30"
 
     def start_crwal(self):
+        self.findIndexName()
         data = {}
-        data["index"]=self.findIndexName()
+        data["index"]=self.index_name
         print(data)
         self.producer.send("street-test",value=data)
         self.producer.flush()
@@ -94,7 +92,12 @@ class st11_crawling:
         print(set(self.category))
     
         print("crawler finish")
-        # self.normalize()
+        data = {}
+        data["finish"]=self.index_name
+        # self.elasticAPI.createIndex(data["index"])
+        self.producer.send("street-test",value=data)
+        self.producer.flush()
+
 
 
     def getData(self, soup):
@@ -112,7 +115,7 @@ class st11_crawling:
                         web_url = data.select_one("li > div > a")["href"]
                         img_src = data.select_one("li > div > a> div.prd_img > img")["src"]
                         categoryName = data.select_one("li > div > div> a").get_text()
-                        purchases = data.select_one("li > div > a > div.prd_info > span").get_text()
+                        purchases = data.select_one("li > div > a > div.prd_info > span.txt_info").get_text()
                         self.category.append(categoryName)
 
                         print("name", name_url["content_name"])
@@ -120,11 +123,7 @@ class st11_crawling:
                         print("web_url", web_url)
                         print("categoryName", categoryName)
                         print("last_discount_price", name_url["last_discount_price"])
-                        if purchases == "추천상품":
-                            purchases = "0"
-                        else:
-                            print("purchases",purchases)
-
+                        print("purchases : ", purchases)
                         data = {}
                         data["imgSrc" ] =img_src
                         data["prdName" ] = name_url["content_name"]
