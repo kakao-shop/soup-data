@@ -17,20 +17,14 @@ from pymongo import MongoClient
 from datetime import datetime
 from ElasticsearchAPI import ElaAPI
 from elasticsearch import Elasticsearch, helpers
-
-
-
+ 
 def __main__ ():
 
     # a = sys.argv[1]  
     # print(a)
     kakao_crawling().start_crwal() # 트리거
-
+ 
 #--------------크롤링 시작 ------------------------------   
-
-
-
-
 class kakao_crawling:
     def __init__(self):
         self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
@@ -46,19 +40,12 @@ class kakao_crawling:
         self.driver_path = "./chromedriver.exe"
         self.elasticAPI = ElaAPI()
         self.es = Elasticsearch(hosts="127.0.0.1", port=9200)
-        # self.keyword=keyword
-        #  C:/Users/kjh19/OneDrive/바탕 화면/test/chromedriver.exe // 노트북
-        # ./chromedriver (2).exe  // 연구실 컴
-        # /home/search/apps/dw/chromedriver 서버컴
         self.chrome_options = Options()
-        # self.chrome_options.add_argument('--headless')
-        # self.chrome_options.add_argument('--no-sandbox')
-        # self.chrome_options.add_argument('--disable-dev-shm-usage') # 서버컴 전용 옵션
         self.chrome_options.add_argument('window-size=1280,1000')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
         self.titleList = []
         self.subList = ["과일", "채소", "채소", "축산","수산/건어물", "유제품/냉장/냉동", "제과/빵" , "면류/즉석식품/양념/오일", "쌀/잡곡", "생수/음료/커피"]
-        self.siteList = [                       
+        self.siteList =  [                       
             ["https://store.kakao.com/category/3/102104103?level=2", "과일"],
             ["https://store.kakao.com/category/3/102104101?level=2" , "채소"],
             ["https://store.kakao.com/category/3/102104110?level=2","채소"],
@@ -95,13 +82,17 @@ class kakao_crawling:
 
             [ "https://store.kakao.com/category/3/102101?level=1", "생수/음료/커피"]
         ]
-
         self.cnt = 0
-    
+    def findIndexName(self):
+        now = datetime.now().minute
+        print("current minute", now)
+        if now < 29:
+            return "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"00"
+        else:
+            return "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"30"
     def start_crwal(self):
         data = {}
-        data["index"]=self.index_name
-        self.elasticAPI.createIndex(data["index"])
+        data["index"]=self.findIndexName()
         print(self.elasticAPI.allIndex())
         print(data)
         self.producer.send("kakao-test",value=data)
@@ -140,12 +131,19 @@ class kakao_crawling:
                     time.sleep(2)
                 except Exception as e:
                     break
-
+ 
             print(site[0], "정상종료")
-        
+
         print("crawler finish")
-        time.sleep(1)
-        self.normalize()
+
+
+        data = {}
+        data["finish"]=self.index_name
+        # self.elasticAPI.createIndex(data["index"])
+        self.producer.send("kakao-test",value=data)
+        self.producer.flush()
+        #time.sleep(1)
+        #self.normalize()
 
     def getData(self, soup, cat):
         # print((soup.prettify()))
@@ -171,11 +169,12 @@ class kakao_crawling:
                 # try:
                 purchase = item.select("li > fu-view-product > div > span > a > div > span.other_info > em > span")
                 purch=list(purchase)
-                # print(type(purchase),purchase, purchase[1])
-                try:
-                    purch = int(re.sub(r"[^0-9]", "", str(purch[1])))
-                except Exception as e:
-                    purch =0
+                num = 0
+                for i in purch:
+                    try:
+                        purch = int(re.sub(r"[^0-9]", "", str(i)))
+                    except Exception as e:
+                        purch =0
                 print("imgSrc : ", imgSrc)
                 print("prdName : ", prdName)
                 print("webUrl : ", webUrl)
@@ -188,7 +187,7 @@ class kakao_crawling:
                 data["prdName" ] = prdName
                 data["webUrl" ] = webUrl
                 data["price"] = price
-                data["purchase"]  = int(purch)
+                data["purchase"]  = int(num)
                 data["cat"] = cat
                 kafka={"data":data}
                 self.pushData(kafka)

@@ -30,18 +30,18 @@ for cat in ['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제
         res2= es.update_by_query(
             index="product-2022-11-10-01-41",  
             body = {
-        "query" :{
-            "bool": {
-                    "must":[
-                    {"match": {"site": "home"}},
-                    { "match":{"cat":cat}}
-            ]
-            }
-        }, 
-        "script": { 
-        "source":"ctx._source.score =ctx._source.purchase *{0:.7f};".format(1/int(res["aggregations"]["test"]["value"])),
-        "lang": "painless"
-        }  }
+                "query" :{
+                    "bool": {
+                            "must":[
+                            {"match": {"site": "home"}},
+                            { "match":{"cat":cat}}
+                    ]
+                    }
+                }, 
+                "script": { 
+                "source":"ctx._source.score =ctx._source.purchase *{0:.7f};".format(1/int(res["aggregations"]["test"]["value"])),
+                "lang": "painless"
+            }  }
         )
         print("res2", res2)
     except Exception as e:

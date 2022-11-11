@@ -33,22 +33,17 @@ class st11_crawling:
             bootstrap_servers=[self.host + ":"+ self.kafka_port],
             value_serializer=lambda x: dumps(x).encode('utf-8')
           )
-        self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
-        self.homeplus = self.client["DATAETL"]['Homeplus']
+        # self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
+        # self.homeplus = self.client["DATAETL"]['Homeplus']
         self.driver_path = "./chromedriver.exe"
-        self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
-                       db='product_test', charset='utf8')
-        self.cur = self.con.cursor()
+        # self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
+        #                db='product_test', charset='utf8')
+        # self.cur = self.con.cursor()
         self.chrome_options = Options()
         self.elasticAPI = ElaAPI()
         self.chrome_options.add_argument('window-size=1280,640')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
-        self.author = {}
-        self.paper = []
-        self.papers = []
-        self.info = {}
-        self.test = []
-        self.infolist = []
+        self.subList = ["과일", "채소", "채소", "축산","수산/건어물", "유제품/냉장/냉동", "제과/빵" , "면류/즉석식품/양념/오일", "쌀/잡곡", "생수/음료/커피"]
         self.cnt = 0
         self.categories =['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품/냉장/냉동','제과/빵','면류/즉석식품/양념/오일','생수/음료/커피']
         self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-%M')
@@ -193,19 +188,12 @@ class st11_crawling:
                 print(e)
         print("end normalize")
 
-
-
-
-
-
-
 es = Elasticsearch(hosts="127.0.0.1", port=9200)
 class ElaAPI:
     
        # 객체 생성
-    def srvHealthCheck(self):
-        health = es.cluster.health()
-        print (health)
+    def deleteIndex(self, str_index):
+        es.indices.delete(index=str_index, ignore=[400, 404])
 
     def allIndex(self):
         print (es.cat.indices())
@@ -267,10 +255,5 @@ class ElaAPI:
                     }
                 }
             )
-
-    
-
-
-
 
 __main__()

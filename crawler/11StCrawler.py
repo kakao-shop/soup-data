@@ -48,12 +48,19 @@ class st11_crawling:
         self.category = []
         self.titleList = []
         self.cnt = 0
-    
+    def findIndexName(self):
+        now = datetime.now().minute
+        print("current minute", now)
+        if now < 29:
+            return "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"00"
+        else:
+            return "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"30"
+
     def start_crwal(self):
         data = {}
-        data["index"]="product-"+datetime.now().strftime('%Y-%m-%d-%H-%M')
+        data["index"]=self.findIndexName()
         print(data)
-        self.producer.send("11st-test",value=data)
+        self.producer.send("street-test",value=data)
         self.producer.flush()
         
         self.driver.get("https://deal.11st.co.kr/browsing/DealAction.tmall?method=getCategory&dispCtgrNo=947161")
@@ -87,7 +94,7 @@ class st11_crawling:
         print(set(self.category))
     
         print("crawler finish")
-        self.normalize()
+        # self.normalize()
 
 
     def getData(self, soup):
@@ -121,7 +128,7 @@ class st11_crawling:
                         data = {}
                         data["imgSrc" ] =img_src
                         data["prdName" ] = name_url["content_name"]
-                        data["webUrl" ] = "https://front.homeplus.co.kr" +web_url
+                        data["webUrl" ] = web_url
                         data["price"] = int(re.sub(r"[^0-9]", "", name_url["last_discount_price"]))  
                         data["purchase"]  = int(re.sub(r"[^0-9]", "", purchases))
                         data["cat"] = categoryName
@@ -158,22 +165,9 @@ class st11_crawling:
         return cnt
 
     def pushData(self, data):
-        self.producer.send("11st-test",value=data)
+        self.producer.send("street-test",value=data)
         self.producer.flush()
 
-    def normalize(self):
-        print("start normalize")
-        for i in self.homeplus.find().sort([("purchase",-1)]).limit(1): 
-            self.homeplus.update_many({},[
-            {"$set":
-                {"score":
-                    {"$multiply":
-                        ["$purchase", 1/i["purchase"]] 
-                    }
-                }
-                }]
-            )
-        print("end normalize")
        
         
 

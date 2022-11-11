@@ -49,12 +49,8 @@ def preddict():
     for num in range(len(keyword)):
         print("num:",keyword[num])
         search = keyword[num]
-        print("search :", search)
         for i in bundledSite.find({"prdName":{ "$regex": search }}).sort([("score",-1)]).limit(1): 
-            print("???",weight[num], weight, i["subcat"])
-            sleep(1)
             for j in bundledSite.find({"subcat":{ "$regex": i["subcat"] }}).sort([("score",1)]).limit(weight[num]):
-                print(weight[num])
                 del j["_id"]
                 product.append(j)
 
