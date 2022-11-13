@@ -65,9 +65,9 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 
 consumer=KafkaConsumer("street-test", 
                         bootstrap_servers=['127.0.0.1:9092'], 
-                        auto_offset_reset="earliest",
+                        auto_offset_reset="latest",
                         enable_auto_commit=True, 
-                        group_id='test-group', 
+                        group_id='street-group', 
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
                         consumer_timeout_ms=1000 
             )
@@ -98,9 +98,9 @@ def normalize(indexName):
                         }
                         }
                     )
-                    print(res)
-                    print(res["aggregations"]["test"]["value"])
-                    print(subcat)
+                   # print(res)
+                    print("value : " ,res["aggregations"]["test"]["value"])
+                    print("subcat : ",subcat)
                     # 업데이트 쿼리
                     res2= es.update_by_query(
                         index=indexName,  
@@ -115,7 +115,7 @@ def normalize(indexName):
                         }
                     }, 
                     "script": {
-                    "source":"ctx._source.score =ctx._source.score * {};".format(str(1/int(res["aggregations"]["test"]["value"]))),
+                    "source":"ctx._source.score =ctx._source.purchase * {};".format(str(1/int(res["aggregations"]["test"]["value"]))),
                     "lang": "painless"
                     }  }
                     )
@@ -150,11 +150,11 @@ def classifier(data):
  
     return subcat
  
-es_index = "product-2022-11-11-21-30"
+es_index = ""
 print("start street")
 res = 0
 while True:
-    if res != 0: break
+    if res != 0: print(res);break
     data_list = []
     cnt = 0
     for message in consumer:
@@ -169,7 +169,6 @@ while True:
         elif "finish" in value:
             res = 1
             break
-        
         docs["_index"]= es_index
         data = value["data"]
         data['subcat']=classifier(data)
@@ -177,8 +176,6 @@ while True:
         data["score"] =float(0)
         docs["_source"] = data
         data_list.append(docs)
- 
-    print(data_list)
     try:
         if data_list ==[]: 
             print("continue")

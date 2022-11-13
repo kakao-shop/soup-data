@@ -66,9 +66,9 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 
 consumer=KafkaConsumer("kakao-test", 
                         bootstrap_servers=['127.0.0.1:9092'], 
-                        auto_offset_reset="earliest",
+                        auto_offset_reset="latest",
                         enable_auto_commit=True, 
-                        group_id='test-group', 
+                        group_id='kakao-group', 
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
                         consumer_timeout_ms=1000 
             )
@@ -114,7 +114,7 @@ def normalize(indexName):
                         }
                     }, 
                     "script": {
-                    "source":"ctx._source.score =ctx._source.score + {};".format(str(int(res["aggregations"]["test"]["value"]))),
+                    "source":"ctx._source.score =ctx._source.purchase * {};".format(str(1/int(res["aggregations"]["test"]["value"]))),
                     "lang": "painless"
                     }  }
                     )
@@ -149,7 +149,7 @@ def classifier(data):
  
     return subcat
  
-es_index = "product-2022-11-11-21-30"
+es_index = "product-2022-11-12-15-30"
 print("start kakao")
 res = ""
 while True:
@@ -157,15 +157,15 @@ while True:
     data_list = []
     cnt = 0
     for message in consumer:
+
         docs = {}
 
         value=message.value
-        # print(value)
-        # if "index" in value:   
-        #     es_index =value["index"]
-        #     print("es_index", es_index) 
-        #     time.sleep(1)
-        #     continue
+        if "index" in value:   
+            es_index =value["index"]
+            print("es_index", es_index) 
+            time.sleep(1)
+            continue
         if "finish" in value:
             print(value)
             print("????")
@@ -175,9 +175,10 @@ while True:
         docs["_index"]= es_index
         data = value["data"]
         data['subcat']=classifier(data)
-        data["site"] ="home"
+        data["site"] ="kakao"
         data["score"] =float(0)
         docs["_source"] = data
+
         data_list.append(docs)
     try:
         if data_list ==[]: 
@@ -186,6 +187,7 @@ while True:
         client.dataInsert(data_list)
         print("success insert")
     except:
+        print("continue")
         continue
 normalize(es_index)
 import datetime

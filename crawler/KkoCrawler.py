@@ -36,7 +36,7 @@ class kakao_crawling:
             bootstrap_servers=[self.host + ":"+ self.kafka_port],
             value_serializer=lambda x: dumps(x).encode('utf-8')
           )
-        self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-%M')
+        self.index_name =""
         self.driver_path = "./chromedriver.exe"
         self.elasticAPI = ElaAPI()
         self.es = Elasticsearch(hosts="127.0.0.1", port=9200)
@@ -87,12 +87,13 @@ class kakao_crawling:
         now = datetime.now().minute
         print("current minute", now)
         if now < 29:
-            return "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"00"
+            self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"00"
         else:
-            return "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"30"
+            self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"30"
     def start_crwal(self):
         data = {}
-        data["index"]=self.findIndexName()
+        self.findIndexName()
+        data["index"]=self.index_name
         print(self.elasticAPI.allIndex())
         print(data)
         self.producer.send("kakao-test",value=data)
@@ -101,7 +102,10 @@ class kakao_crawling:
         for site in self.siteList:
             self.driver.get(site[0])
             time.sleep(1)
-            self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/div/fu-pw-category-result/div/div/cu-pagination-list/div/div[1]/div[1]/input").click()
+            try:
+                self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/div/fu-pw-category-result/div/div/cu-pagination-list/div/div[1]/div[1]/input").click()
+            except Exception as e:
+                continue
             time.sleep(1)
             html = self.driver.page_source
             soup = BeautifulSoup(html)
@@ -167,9 +171,8 @@ class kakao_crawling:
                 price = item.select_one("li > fu-view-product > div > span > a > div > span.price_info > span.txt_number").get_text()
                 price = int(re.sub(r"[^0-9]", "", price))
                 # try:
-                purchase = item.select("li > fu-view-product > div > span > a > div > span.other_info > em > span")
+                purchase = item.select("li > fu-view-product > div > span > a > div > span.other_info > em > span.txt_info")
                 purch=list(purchase)
-                num = 0
                 for i in purch:
                     try:
                         purch = int(re.sub(r"[^0-9]", "", str(i)))
@@ -187,7 +190,7 @@ class kakao_crawling:
                 data["prdName" ] = prdName
                 data["webUrl" ] = webUrl
                 data["price"] = price
-                data["purchase"]  = int(num)
+                data["purchase"]  = purch
                 data["cat"] = cat
                 kafka={"data":data}
                 self.pushData(kafka)

@@ -27,10 +27,13 @@ class st11_crawling:
         # self.homeplus = self.client["DATAETL"]['Street']
         self.host = '127.0.0.1'
         self.kafka_port = '9092'
-        self.producer=KafkaProducer(acks=0, 
+        self.producer=KafkaProducer(
+            acks=0, 
             compression_type='gzip',
             bootstrap_servers=[self.host + ":"+ self.kafka_port],
-            value_serializer=lambda x: dumps(x).encode('utf-8')
+            value_serializer=lambda x: dumps(x).encode('utf-8'),
+            linger_ms=1000
+
           )
         self.driver_path = "./chromedriver.exe"
         #  C:/Users/kjh19/OneDrive/바탕 화면/test/chromedriver.exe // 노트북
@@ -94,7 +97,7 @@ class st11_crawling:
         print("crawler finish")
         data = {}
         data["finish"]=self.index_name
-        # self.elasticAPI.createIndex(data["index"])
+        # self.elasticAPI.createIndex(data["index"])st
         self.producer.send("street-test",value=data)
         self.producer.flush()
 
@@ -115,7 +118,7 @@ class st11_crawling:
                         web_url = data.select_one("li > div > a")["href"]
                         img_src = data.select_one("li > div > a> div.prd_img > img")["src"]
                         categoryName = data.select_one("li > div > div> a").get_text()
-                        purchases = data.select_one("li > div > a > div.prd_info > span.txt_info").get_text()
+                        purchases = data.select_one("li > div > a > div.prd_info > span").get_text()
                         self.category.append(categoryName)
 
                         print("name", name_url["content_name"])
@@ -151,6 +154,7 @@ class st11_crawling:
                             data["cat"] = "제과/빵"
                         else: continue
                         kafka={"data":data}
+                        print(kafka)
                         self.pushData(kafka)
 
 
@@ -165,6 +169,7 @@ class st11_crawling:
 
     def pushData(self, data):
         self.producer.send("street-test",value=data)
+        print("????")
         self.producer.flush()
 
        

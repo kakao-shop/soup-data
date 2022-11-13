@@ -67,9 +67,9 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
  
 consumer=KafkaConsumer("home-test", 
                         bootstrap_servers=['127.0.0.1:9092'], 
-                        auto_offset_reset="earliest",
+                        auto_offset_reset="latest",
                         enable_auto_commit=True, 
-                        group_id='test-group', 
+                        group_id='hhome-group', 
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
                         consumer_timeout_ms=1000 
             )
@@ -118,7 +118,7 @@ def normalize(indexName):
                         }
                     }, 
                     "script": {
-                    "source":"ctx._source.score =ctx._source.score * {};".format(str(1/int(res["aggregations"]["test"]["value"]))),
+                    "source":"ctx._source.score =ctx._source.purchase * {};".format(str(1/int(res["aggregations"]["test"]["value"]))),
                     "lang": "painless"
                     }  }
                     )
@@ -130,7 +130,7 @@ def normalize(indexName):
 
 
 
-    def classifier(data):
+def classifier(data):
     subcat = ""
     if data["cat"] =="축산":
         subcat =ruleBaseClassifier.meat(data["prdName"])
