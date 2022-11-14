@@ -59,7 +59,7 @@ class st11_crawling:
         self.findIndexName()
         data = {}
         data["index"]=self.index_name
-        print(data)
+        # print(data)
         self.producer.send("home-test",value=data)
         self.producer.flush()
         
@@ -68,7 +68,7 @@ class st11_crawling:
         cnt = 0
         idx = 0
         for i in range(2,11 ):
-            print("/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/ul/li[{}]".format(str(i)))
+            # print("/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/ul/li[{}]".format(str(i)))
             try:
                 self.driver.find_element_by_xpath("/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/ul/li[{}]/button".format(str(i))).click()
             except Exception as e:
@@ -99,6 +99,11 @@ class st11_crawling:
         # self.elasticAPI.createIndex(data["index"])
         self.producer.send("home-test",value=data)
         self.producer.flush()
+        data = {}
+        data["next"]=self.index_name
+        # self.elasticAPI.createIndex(data["index"])
+        self.producer.send("kakao-test",value=data)
+        self.producer.flush()
 
 
     def getData(self, soup, idx):
@@ -110,7 +115,7 @@ class st11_crawling:
                 for item in items:
                     for data in item:
                         cnt +=1
-                        print("=====================================s")
+                        # print("=====================================s")
                         try:
                             name = data.select("div > div.detailInfo > a > p")
                             if len(name) >= 2:
@@ -139,8 +144,8 @@ class st11_crawling:
                             self.pushData(kafka)
                         except Exception as e:
                             print("",e)
-                        print(cnt)
-                        print("=====================================e")
+                        # print(cnt)
+                        # print("=====================================e")
             except Exception as e:
                 continue 
         return cnt
@@ -173,9 +178,9 @@ class st11_crawling:
                     }
                     }
                 )
-                print(res)
-                print(res["aggregations"]["test"]["value"])
-                print(cat)
+                # print(res)
+                # print(res["aggregations"]["test"]["value"])
+                # print(cat)
                 # 업데이트 쿼리
                 res2= es.update_by_query(
                     index=self.index_name,  
@@ -193,10 +198,10 @@ class st11_crawling:
                 "lang": "painless"
                 }  }
                 )
-                print("res2", res2)
+                # print("res2", res2)
             except Exception as e:
                 print(e)
-        print("end normalize")
+        # print("end normalize")
 
 es = Elasticsearch(hosts="127.0.0.1", port=9200)
 class ElaAPI:

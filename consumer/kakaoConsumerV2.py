@@ -96,7 +96,7 @@ def normalize(indexName):
                         }
                         }
                     )
-                    print(subcat)
+                    # print(subcat)
                     # 업데이트 쿼리
                     res2= es.update_by_query(
                         index=indexName,  
@@ -115,7 +115,7 @@ def normalize(indexName):
                     "lang": "painless"
                     }  }
                     )
-                    print("res2", res2)
+                    # print("res2", res2)
                 except Exception as e:
                     print(e)
         print("end normalize")
@@ -170,7 +170,7 @@ def beforeTime(time):
     if len(data[-2]) == 1:
         data[-2]= "0" + data[-2]
     
-    print(data)
+    # print(data)
     return "-".join(data)
 
 
@@ -189,7 +189,7 @@ def __main__():
             value=message.value
             if "index" in value:   
                 es_index =value["index"]
-                print("es_index", es_index) 
+                # print("es_index", es_index) 
                 time.sleep(1)
                 continue
             if "finish" in value:
@@ -207,7 +207,7 @@ def __main__():
             data_list.append(docs)
         try:
             if data_list ==[]: 
-                print("continue")
+                # print("continue")
                 continue
             client.dataInsert(data_list)
             print("success insert")

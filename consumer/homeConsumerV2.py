@@ -101,9 +101,9 @@ def normalize(indexName):
                         }
                         }
                     )
-                    print("??? : " ,res)
-                    print(res["aggregations"]["test"]["value"])
-                    print(subcat)
+                    # print("??? : " ,res)
+                    # print(res["aggregations"]["test"]["value"])
+                    # print(subcat)
                     # 업데이트 쿼리
                     res2= es.update_by_query(
                         index=indexName,  
@@ -182,7 +182,7 @@ while True:
         docs["_source"] = data
         data_list.append(docs)
  
-    print(data_list)
+    # print(data_list)
     try:
         if data_list ==[]: 
             print("continue")
@@ -240,7 +240,7 @@ def __main__():
             docs["_source"] = data
             data_list.append(docs)
     
-        print(data_list)
+        # print(data_list)
         try:
             if data_list ==[]: 
                 print("continue")
@@ -254,6 +254,6 @@ def __main__():
 
     deleteIndexName = beforeTime(es_index)
     deleteIndex(deleteIndexName)
-    print(deleteIndexName)
+    # print(deleteIndexName)
 
 __main__()

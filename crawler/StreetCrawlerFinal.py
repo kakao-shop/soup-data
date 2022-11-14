@@ -50,7 +50,7 @@ class st11_crawling:
         self.cnt = 0
     def findIndexName(self):
         now = datetime.now().minute
-        print("current minute", now)
+        # print("current minute", now)
         if now < 29:
             self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"00"
         else:
@@ -60,7 +60,7 @@ class st11_crawling:
         self.findIndexName()
         data = {}
         data["index"]=self.index_name
-        print(data)
+        # print(data)
         self.producer.send("street-test",value=data)
         self.producer.flush()
         
@@ -94,13 +94,18 @@ class st11_crawling:
             soup = BeautifulSoup(html, 'html.parser')
             a_cnt = self.getData(soup)
             cnt += a_cnt
-        print(set(self.category))
+        # print(set(self.category))
     
-        print("crawler finish")
+        # print("crawler finish")
         data = {}
         data["finish"]=self.index_name
         # self.elasticAPI.createIndex(data["index"])st
         self.producer.send("street-test",value=data)
+        self.producer.flush()
+        data = {}
+        data["next"]=self.index_name
+        # self.elasticAPI.createIndex(data["index"])
+        self.producer.send("kakao-test",value=data)
         self.producer.flush()
 
 
@@ -114,7 +119,7 @@ class st11_crawling:
                 for data in item:
                     # print(data)
                     cnt +=1
-                    print("=====================================s")
+                    # print("=====================================s")
                     try:
                         name_url = eval(data.select_one("li > div > a")["data-log-body"])
                         web_url = data.select_one("li > div > a")["href"]
@@ -123,12 +128,12 @@ class st11_crawling:
                         purchases = data.select_one("li > div > a > div.prd_info > span").get_text()
                         self.category.append(categoryName)
 
-                        print("name", name_url["content_name"])
-                        print("img_src", img_src)
-                        print("web_url", web_url)
-                        print("categoryName", categoryName)
-                        print("last_discount_price", name_url["last_discount_price"])
-                        print("purchases : ", purchases)
+                        # print("name", name_url["content_name"])
+                        # print("img_src", img_src)
+                        # print("web_url", web_url)
+                        # print("categoryName", categoryName)
+                        # print("last_discount_price", name_url["last_discount_price"])
+                        # print("purchases : ", purchases)
                         data = {}
                         data["imgSrc" ] =img_src
                         data["prdName" ] = name_url["content_name"]
@@ -165,13 +170,13 @@ class st11_crawling:
                     except Exception as e:
                         print(e, " ???? ")
                     #print(cnt, data)
-                    print("=====================================e")
+                    # print("=====================================e")
             
         return cnt
 
     def pushData(self, data):
         self.producer.send("street-test",value=data)
-        print("????")
+        # print("????")
         self.producer.flush()
 
        
