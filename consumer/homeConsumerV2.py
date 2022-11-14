@@ -89,7 +89,7 @@ def normalize(indexName):
                             {
                                 "bool": {
                                     "must":[
-                                        {"match":{"site":"home" }},
+                                        {"match":{"site":"홈플러스" }},
                                     {"match":{"cat":cat}},
                                     {"match":{"subcat":subcat}}]
                                 }
@@ -111,7 +111,7 @@ def normalize(indexName):
                     "query" :{
                         "bool": {
                                 "must":[
-                                {"match": {"site": "home"}},
+                                {"match": {"site": "홈플러스"}},
                                 { "match":{"cat":cat}},
                                 {"match":{"subcat":subcat}}
                         ]
@@ -177,7 +177,7 @@ while True:
         docs["_index"]= es_index
         data = value["data"]
         data['subcat']=classifier(data)
-        data["site"] ="home"
+        data["site"] ="홈플러스"
         data["score"] =float(0)
         docs["_source"] = data
         data_list.append(docs)
@@ -191,7 +191,6 @@ while True:
         print("success insert")
     except:
         continue
-normalize(es_index)
 import datetime
 def beforeTime(time):
     data  = time.split("-")
@@ -207,9 +206,54 @@ def beforeTime(time):
             data[-2], data[-1] =  str(hour-1), str(60+remain)
     
     return "-".join(data)
-deleteIndexName = beforeTime(es_index)
-es.indices.delete(index=deleteIndexName, ignore=[400, 404])
-print(deleteIndexName)
 
+def deleteIndex(deleteIndexName):
+    es.indices.delete(index=deleteIndexName, ignore=[400, 404])
 
+def __main__():
+    es_index = ""
+    print("start home")
+    res = 0
+    while True:
+        if res == 1: break
+        data_list = []
+        cnt = 0
+        for message in consumer:
+            docs = {}
 
+            value=message.value
+            
+            # print(value)
+            if "index" in value:   
+                es_index =value["index"]
+                print("es_index", es_index) 
+                time.sleep(1)
+                continue
+            if "finish" in value:
+                res = 1
+                break
+            docs["_index"]= es_index
+            data = value["data"]
+            data['subcat']=classifier(data)
+            data["site"] ="홈플러스"
+            data["score"] =float(0)
+            docs["_source"] = data
+            data_list.append(docs)
+    
+        print(data_list)
+        try:
+            if data_list ==[]: 
+                print("continue")
+                continue
+            client.dataInsert(data_list)
+            print("success insert")
+        except:
+            continue
+
+    normalize(es_index)
+
+    deleteIndexName = beforeTime(es_index)
+    deleteIndex(deleteIndexName)
+    print(deleteIndexName)
+
+__main__()

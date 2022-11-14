@@ -10,10 +10,7 @@ from elasticsearch import Elasticsearch, helpers
 
  
 es = Elasticsearch(hosts="127.0.0.1", port=9200)
-
-
 client = ElaAPI()
-index_date = datetime.now().strftime('%Y-%m-%d-%H-%M')
  
 CatAndSubcat = {}
 CatAndSubcat["과일"]=[    "감/홍시","사과","귤","포도","열대과일","견과/밤","키위","배","토마토",
@@ -66,10 +63,12 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 consumer=KafkaConsumer("street-test", 
                         bootstrap_servers=['127.0.0.1:9092'], 
                         auto_offset_reset="latest",
-                        enable_auto_commit=True, 
+                        enable_auto_commit=True,
                         group_id='street-group', 
+                        consumer_timeout_ms=1000,
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
-                        consumer_timeout_ms=1000 
+                        
+                        
             )
  
 ruleBaseClassifier = RuleBaseClassifier.Classifier()
@@ -86,7 +85,7 @@ def normalize(indexName):
                             "query":{
                                     "bool": {
                                         "must":[
-                                            {"match":{"site":"street" }},
+                                            {"match":{"site":"11번가" }},
                                         {"match":{"cat":cat}},
                                         {"match":{"subcat":subcat}}]
                                     }
@@ -108,7 +107,7 @@ def normalize(indexName):
                     "query" :{
                         "bool": {
                                 "must":[
-                                {"match": {"site": "street"}},
+                                {"match": {"site": "11번가"}},
                                 { "match":{"cat":cat}},
                                 {"match":{"subcat":subcat}}
                         ]
@@ -150,41 +149,12 @@ def classifier(data):
  
     return subcat
  
-es_index = ""
-print("start street")
-res = 0
-while True:
-    if res != 0: print(res);break
-    data_list = []
-    cnt = 0
-    for message in consumer:
-        docs = {}
-        value=message.value
-        # print(value)
-        if "index" in value:   
-            es_index =value["index"]
-            print("es_index", es_index) 
-            time.sleep(1)
-            continue
-        elif "finish" in value:
-            res = 1
-            break
-        docs["_index"]= es_index
-        data = value["data"]
-        data['subcat']=classifier(data)
-        data["site"] ="street"
-        data["score"] =float(0)
-        docs["_source"] = data
-        data_list.append(docs)
-    try:
-        if data_list ==[]: 
-            print("continue")
-            continue
-        client.dataInsert(data_list)
-        print("success insert")
-    except:
-        continue
-normalize(es_index)
+def deleteIndex(deleteIndexName):
+    es.indices.delete(index=deleteIndexName, ignore=[400, 404])
+
+
+
+
 import datetime
 def beforeTime(time):
     data  = time.split("-")
@@ -203,10 +173,48 @@ def beforeTime(time):
     if len(data[-2]) == 1:
         data[-2]= "0" + data[-2]
     return "-".join(data)
-deleteIndexName = beforeTime(es_index)
-print("deleteIndexName : ", deleteIndexName)
-es.indices.delete(index=deleteIndexName, ignore=[400, 404])
 
 
 
-
+def __main__():
+    es_index = ""
+    print("start street")
+    res = ""
+    while True:
+        if res != "": print(res);break
+        data_list = []
+        for message in consumer:
+            docs = {}
+            value=message.value
+            # print(value)
+            if "index" in value:   
+                es_index =value["index"]
+                print("es_index", es_index) 
+                time.sleep(1)
+                continue
+            if "finish" in value:
+                print(value)
+                res = "test"
+                time.sleep(1)
+                break
+            docs["_index"]= es_index
+            data = value["data"]
+            data['subcat']=classifier(data)
+            data["site"] ="11번가"
+            data["score"] =float(0)
+            docs["_source"] = data
+            data_list.append(docs)
+        try:
+            if data_list ==[]: 
+                print("continue")
+                continue
+            client.dataInsert(data_list)
+            print("success insert")
+        except:
+            print("continue")
+            continue
+    normalize(es_index)
+    deleteIndexName = beforeTime(es_index)
+    print("deleteIndexName : ", deleteIndexName)
+    deleteIndex(deleteIndexName)
+__main__()

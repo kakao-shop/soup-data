@@ -70,10 +70,12 @@ class st11_crawling:
         for i in range(2,6):
             print("/html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul[1]/li[{}]".format(str(i)))
             try:
-                self.driver.find_element_by_xpath("/html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul[1]/li[{}]/a".format(str(i))).click()
+                try:
+                    self.driver.find_element_by_xpath("/html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul[1]/li[{}]/a".format(str(i))).click()
+                except Exception as e:
+                    self.driver.find_element_by_xpath("/html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul[1]/li[{}]/a".format(str(i))).send_keys(Keys.ENTER)
             except Exception as e:
-                self.driver.find_element_by_xpath("/html/body/div[2]/div[3]/div/div/div[2]/div[1]/div/ul[1]/li[{}]/a".format(str(i))).send_keys(Keys.ENTER)
-            
+                continue    
             time.sleep(1)
             last_height = self.driver.execute_script("return document.body.scrollHeight")
 

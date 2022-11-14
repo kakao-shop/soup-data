@@ -10,10 +10,7 @@ from elasticsearch import Elasticsearch, helpers
 
  
 es = Elasticsearch(hosts="127.0.0.1", port=9200)
-
-
 client = ElaAPI()
-index_date = datetime.now().strftime('%Y-%m-%d-%H-%M')
  
 CatAndSubcat = {}
 CatAndSubcat["과일"]=[    "감/홍시","사과","귤","포도","열대과일","견과/밤","키위","배","토마토",
@@ -87,7 +84,7 @@ def normalize(indexName):
                             "query":{
                                     "bool": {
                                         "must":[
-                                            {"match":{"site":"kakao" }},
+                                            {"match":{"site":"카카오 쇼핑" }},
                                         {"match":{"cat":cat}},
                                         {"match":{"subcat":subcat}}]
                                     }
@@ -107,7 +104,7 @@ def normalize(indexName):
                     "query" :{
                         "bool": {
                                 "must":[
-                                {"match": {"site": "kakao"}},
+                                {"match": {"site": "카카오 쇼핑"}},
                                 {"match":{"cat":cat}},
                                 { "match":{"subcat":subcat}}
                         ]
@@ -124,6 +121,9 @@ def normalize(indexName):
         print("end normalize")
 
 
+
+def deleteIndex(deleteIndexName):
+    es.indices.delete(index=deleteIndexName, ignore=[400, 404])
 
 
 def classifier(data):
@@ -149,47 +149,8 @@ def classifier(data):
  
     return subcat
  
-es_index = "product-2022-11-12-15-30"
-print("start kakao")
-res = ""
-while True:
-    if res != "": break
-    data_list = []
-    cnt = 0
-    for message in consumer:
 
-        docs = {}
 
-        value=message.value
-        if "index" in value:   
-            es_index =value["index"]
-            print("es_index", es_index) 
-            time.sleep(1)
-            continue
-        if "finish" in value:
-            print(value)
-            print("????")
-            res = "test"
-            time.sleep(10)
-            break
-        docs["_index"]= es_index
-        data = value["data"]
-        data['subcat']=classifier(data)
-        data["site"] ="kakao"
-        data["score"] =float(0)
-        docs["_source"] = data
-
-        data_list.append(docs)
-    try:
-        if data_list ==[]: 
-            print("continue")
-            continue
-        client.dataInsert(data_list)
-        print("success insert")
-    except:
-        print("continue")
-        continue
-normalize(es_index)
 import datetime
 def beforeTime(time):
     data  = time.split("-")
@@ -211,10 +172,54 @@ def beforeTime(time):
     
     print(data)
     return "-".join(data)
-deleteIndexName = beforeTime(es_index)
-print(deleteIndexName)
-es.indices.delete(index=deleteIndexName, ignore=[400, 404])
 
 
+
+def __main__():
+    es_index = ""
+    print("start kakao")
+    res = ""
+    while True:
+        if res != "": break
+        data_list = []
+        for message in consumer:
+
+            docs = {}
+
+            value=message.value
+            if "index" in value:   
+                es_index =value["index"]
+                print("es_index", es_index) 
+                time.sleep(1)
+                continue
+            if "finish" in value:
+                print("????")
+                res = "test"
+                time.sleep(1)
+                break
+            docs["_index"]= es_index
+            data = value["data"]
+            data['subcat']=classifier(data)
+            data["site"] ="카카오 쇼핑"
+            data["score"] =float(0)
+            docs["_source"] = data
+
+            data_list.append(docs)
+        try:
+            if data_list ==[]: 
+                print("continue")
+                continue
+            client.dataInsert(data_list)
+            print("success insert")
+        except:
+            print("continue")
+            continue
+    normalize(es_index)
+    deleteIndexName = beforeTime(es_index)
+    print(deleteIndexName)
+    deleteIndex(deleteIndexName)
+
+
+__main__()
 
 
