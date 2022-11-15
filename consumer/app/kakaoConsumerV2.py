@@ -9,7 +9,7 @@ import time
 from elasticsearch import Elasticsearch, helpers
 
  
-es = Elasticsearch(hosts="127.0.0.1", port=9200)
+es = Elasticsearch(hosts="192.168.56.110", port=9200)
 client = ElaAPI()
  
 CatAndSubcat = {}
@@ -62,9 +62,10 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 
 
 consumer=KafkaConsumer("kakao-test", 
-                        bootstrap_servers=['127.0.0.1:9092'], 
-                        auto_offset_reset="latest",
-                        enable_auto_commit=True, 
+                        bootstrap_servers=['my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc:9092'], 
+                        auto_offset_reset="earliest",
+                        auto_commit_interval_ms=100,
+                        enable_auto_commit=False, 
                         group_id='kakao-group', 
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
                         consumer_timeout_ms=1000 
@@ -96,7 +97,7 @@ def normalize(indexName):
                         }
                         }
                     )
-                    # print(subcat)
+                    print(subcat)
                     # 업데이트 쿼리
                     res2= es.update_by_query(
                         index=indexName,  
@@ -183,13 +184,12 @@ def __main__():
         if res != "": break
         data_list = []
         for message in consumer:
-
             docs = {}
 
             value=message.value
             if "index" in value:   
                 es_index =value["index"]
-                # print("es_index", es_index) 
+                print("es_index", es_index) 
                 time.sleep(1)
                 continue
             if "finish" in value:
@@ -204,10 +204,11 @@ def __main__():
             data["score"] =float(0)
             docs["_source"] = data
 
+            print(docs)
             data_list.append(docs)
         try:
             if data_list ==[]: 
-                # print("continue")
+                print("continue")
                 continue
             client.dataInsert(data_list)
             print("success insert")

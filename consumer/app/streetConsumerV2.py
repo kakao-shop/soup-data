@@ -9,7 +9,7 @@ import time
 from elasticsearch import Elasticsearch, helpers
 
  
-es = Elasticsearch(hosts="127.0.0.1", port=9200)
+es = Elasticsearch(hosts="192.168.56.110", port=9200)
 client = ElaAPI()
  
 CatAndSubcat = {}
@@ -60,15 +60,14 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 ,"떡볶이/떡사리","시럽/잼","튀김류","케찹/마요네즈","떡갈비/함박스테이크","건어물"
 ,"베이컨/소시지","드레싱","새우","문어","쭈꾸미"] 
 
-consumer=KafkaConsumer("street-test", 
-                        bootstrap_servers=['127.0.0.1:9092'], 
-                        auto_offset_reset="latest",
-                        enable_auto_commit=True,
-                        group_id='street-group', 
-                        consumer_timeout_ms=1000,
+consumer=KafkaConsumer("kakao-test", 
+                        bootstrap_servers=['my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc:9092'], 
+                        auto_offset_reset="earliest",
+                        auto_commit_interval_ms=100,
+                        enable_auto_commit=False, 
+                        group_id='kakao-group', 
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
-                        
-                        
+                        consumer_timeout_ms=1000 
             )
  
 ruleBaseClassifier = RuleBaseClassifier.Classifier()

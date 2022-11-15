@@ -11,11 +11,8 @@ from kafka import KafkaProducer
 import json
 from json import dumps
 import sys
-import pymysql
-from pymongo import MongoClient
-from elasticsearch import Elasticsearch, helpers
 from datetime import datetime
-
+from pytz import timezone
 
 #--------------------------홈플러스 크롤링----------------------------
 def __main__ ():
@@ -26,43 +23,42 @@ def __main__ ():
 
 class st11_crawling:
     def __init__(self):
-        self.host = '127.0.0.1'
+        self.host = 'my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc'
         self.kafka_port = '9092'
         self.producer=KafkaProducer(acks=0, 
             compression_type='gzip',
             bootstrap_servers=[self.host + ":"+ self.kafka_port],
             value_serializer=lambda x: dumps(x).encode('utf-8')
           )
-        # self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
-        # self.homeplus = self.client["DATAETL"]['Homeplus']
-        self.driver_path = "./chromedriver.exe"
-        # self.con = pymysql.connect(host='localhost', user='root', password='whdgns1002@',
-        #                db='product_test', charset='utf8')
-        # self.cur = self.con.cursor()
+        # self.driver_path = "./chromedriver.exe"
+        self.driver_path = "/usr/src/chrome/chromedriver"
         self.chrome_options = Options()
-        self.elasticAPI = ElaAPI()
-        self.chrome_options.add_argument('window-size=1280,640')
+        self.chrome_options.add_argument('window-size=1280,1000')
+        self.chrome_options.add_argument('--no-sandbox')
+        self.chrome_options.add_argument('--headless')
+        self.chrome_options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
         self.subList = ["과일", "채소", "채소", "축산","수산/건어물", "유제품/냉장/냉동", "제과/빵" , "면류/즉석식품/양념/오일", "쌀/잡곡", "생수/음료/커피"]
         self.cnt = 0
         self.categories =['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품/냉장/냉동','제과/빵','면류/즉석식품/양념/오일','생수/음료/커피']
-        self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-%M')
+        self.index_name = "product-"+datetime.now(timezone('Asia/Seoul')).strftime('%Y-%m-%d-%H-%M')
 
     def findIndexName(self):
         now = datetime.now().minute
         print("current minute", now)
         if now < 29:
-            self.index_name ="product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"00"
+            self.index_name ="product-"+datetime.now(timezone('Asia/Seoul')).strftime('%Y-%m-%d-%H-')+"00"
         else:
-            self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"30"
+            self.index_name = "product-"+datetime.now(timezone('Asia/Seoul')).strftime('%Y-%m-%d-%H-')+"30"
     def homeplus_crwal(self):
+        print("start")
         self.findIndexName()
         data = {}
         data["index"]=self.index_name
         # print(data)
         self.producer.send("home-test",value=data)
         self.producer.flush()
-        
+        print(self.index_name)
         self.driver.get("https://front.homeplus.co.kr/leaflet?gnbNo=201")
         time.sleep(1)
         cnt = 0
@@ -132,7 +128,7 @@ class st11_crawling:
                             buyer = data.select_one("div > div.detailInfo > div.prodScoreWrap > span:nth-child(3)").get_text()
                             buyer = re.sub(r"[^0-9]", "", buyer)
                             categoryName = self.categories[idx]
-
+                            print(name)
                             data = {}
                             data["imgSrc" ] =img_src
                             data["prdName" ] = name
@@ -160,115 +156,115 @@ class st11_crawling:
         # self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
         # self.con.commit()  
     
-    def normalize(self):
-        print("start normalize")
-        for cat in self.categories:
-            try:
-                res = es.search(
-                    index=self.index_name, 
+    # def normalize(self):
+    #     print("start normalize")
+    #     for cat in self.categories:
+    #         try:
+    #             res = es.search(
+    #                 index=self.index_name, 
                     
-                    body={
-                        "size": 0,
-                        "query":{"match":{"site":"home" },
-                                "match":{"cat":cat}},
-                        "aggs": {
-                            "test": {
-                            "max": { "field": "purchase"}
-                            }
-                    }
-                    }
-                )
-                # print(res)
-                # print(res["aggregations"]["test"]["value"])
-                # print(cat)
-                # 업데이트 쿼리
-                res2= es.update_by_query(
-                    index=self.index_name,  
-                    body = {
-                "query" :{
-                    "bool": {
-                            "must":[
-                            {"match": {"site": "home"}},
-                            { "match":{"cat":cat}}
-                    ]
-                    }
-                }, 
-                "script": {
-                "source":"ctx._source.score =ctx._source.score * 1/{};".format(str(int(res["aggregations"]["test"]["value"]))),
-                "lang": "painless"
-                }  }
-                )
-                # print("res2", res2)
-            except Exception as e:
-                print(e)
+    #                 body={
+    #                     "size": 0,
+    #                     "query":{"match":{"site":"home" },
+    #                             "match":{"cat":cat}},
+    #                     "aggs": {
+    #                         "test": {
+    #                         "max": { "field": "purchase"}
+    #                         }
+    #                 }
+    #                 }
+    #             )
+    #             # print(res)
+    #             # print(res["aggregations"]["test"]["value"])
+    #             # print(cat)
+    #             # 업데이트 쿼리
+    #             res2= es.update_by_query(
+    #                 index=self.index_name,  
+    #                 body = {
+    #             "query" :{
+    #                 "bool": {
+    #                         "must":[
+    #                         {"match": {"site": "home"}},
+    #                         { "match":{"cat":cat}}
+    #                 ]
+    #                 }
+    #             }, 
+    #             "script": {
+    #             "source":"ctx._source.score =ctx._source.score * 1/{};".format(str(int(res["aggregations"]["test"]["value"]))),
+    #             "lang": "painless"
+    #             }  }
+    #             )
+    #             # print("res2", res2)
+    #         except Exception as e:
+    #             print(e)
         # print("end normalize")
 
-es = Elasticsearch(hosts="127.0.0.1", port=9200)
-class ElaAPI:
+# es = Elasticsearch(hosts="127.0.0.1", port=9200)
+# class ElaAPI:
     
-       # 객체 생성
-    def deleteIndex(self, str_index):
-        es.indices.delete(index=str_index, ignore=[400, 404])
+#        # 객체 생성
+#     def deleteIndex(self, str_index):
+#         es.indices.delete(index=str_index, ignore=[400, 404])
 
-    def allIndex(self):
-        print (es.cat.indices())
+#     def allIndex(self):
+#         print (es.cat.indices())
 
-    def dataInsert(self, docs):
-        # ===============
-        # 데이터 삽입
-        # ===============
-        helpers.bulk(es, docs)
+#     def dataInsert(self, docs):
+#         # ===============
+#         # 데이터 삽입
+#         # ===============
+#         helpers.bulk(es, docs)
 
-    def searchAll(self, index):
-        res = es.search(
-            index = index, 
-            body = {
-                "query":{"match_all":{}}
-            }
-        )
-        print (json.dumps(res, ensure_ascii=False, indent=4))
+#     def searchAll(self, index):
+#         res = es.search(
+#             index = index, 
+#             body = {
+#                 "query":{"match_all":{}}
+#             }
+#         )
+#         print (json.dumps(res, ensure_ascii=False, indent=4))
 
 
-    def createIndex(self, date):
-        # ===============
-        # 인덱스 생성
-        # ===============
-        index = "product-" + date
+#     def createIndex(self, date):
+#         # ===============
+#         # 인덱스 생성
+#         # ===============
+#         index = "product-" + date
   
-        if es.indices.exists(index=index):
-            pass
-        else:
-            es.indices.create(
-            index = index,
-            body = {
-                "settings": {
-                    "analysis": {
-                        "analyzer": {
-                            "content": {
-                                "type": "custom",
-                                "tokenizer": "nori_tokenizer",
-                                "decompound_mode": "mixed"
-                                }
+#         if es.indices.exists(index=index):
+#             pass
+#         else:
+#             es.indices.create(
+#             index = index,
+#             body = {
+#                 "settings": {
+#                     "analysis": {
+#                         "analyzer": {
+#                             "content": {
+#                                 "type": "custom",
+#                                 "tokenizer": "nori_tokenizer",
+#                                 "decompound_mode": "mixed"
+#                                 }
       
-                        }
-                    }
-                },
-                "mappings": {
+#                         }
+#                     }
+#                 },
+#                 "mappings": {
                 
-                        "properties": {
-                            "imgSrc":    {"type": "text"},
-                            "prdName": {"type": "text","analyzer": "content"},
-                            "webUrl":    {"type": "text"},
-                            "purchase":    {"type": "text"},
-                            "subcat":   {"type": "text"},
-                            "site":     {"type": "text"},
-                            "cat":   {"type": "text"},
-                            "price":     {"type": "integer"},
-                            "score":   {"type": "float"}
-                            }
+#                         "properties": {
+#                             "imgSrc":    {"type": "text"},
+#                             "prdName": {"type": "text","analyzer": "content"},
+#                             "webUrl":    {"type": "text"},
+#                             "purchase":    {"type": "text"},
+#                             "subcat":   {"type": "text"},
+#                             "site":     {"type": "text"},
+#                             "cat":   {"type": "text"},
+#                             "price":     {"type": "integer"},
+#                             "score":   {"type": "float"}
+#                             }
                         
-                    }
-                }
-            )
+#                     }
+#                 }
+#             )
 
 __main__()

@@ -12,7 +12,7 @@ import json
 from json import dumps
 import sys
 from datetime import datetime
-
+from pytz import timezone
 def __main__ ():
     
     a = len(sys.argv)  
@@ -25,7 +25,7 @@ class st11_crawling:
 
         # self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
         # self.homeplus = self.client["DATAETL"]['Street']
-        self.host = '127.0.0.1'
+        self.host = 'my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc'
         self.kafka_port = '9092'
         self.producer=KafkaProducer(
             acks=0, 
@@ -35,32 +35,32 @@ class st11_crawling:
             linger_ms=1000
 
           )
-        self.driver_path = "./chromedriver.exe"
+        # self.driver_path = "./chromedriver.exe"
         #  C:/Users/kjh19/OneDrive/바탕 화면/test/chromedriver.exe // 노트북
-
+        self.driver_path = "/usr/src/chrome/chromedriver"
         self.chrome_options = Options()
-        # self.chrome_options.add_argument('--headless')
-        # self.chrome_options.add_argument('--no-sandbox')
-        # self.chrome_options.add_argument('--disable-dev-shm-usage') # 서버컴 전용 옵션
         self.chrome_options.add_argument('window-size=1280,1000')
+        self.chrome_options.add_argument('--no-sandbox')
+        self.chrome_options.add_argument('--headless')
+        self.chrome_options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
         self.category = []
-        self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-%M')
+        self.index_name = "product-"+datetime.now(timezone('Asia/Seoul')).strftime('%Y-%m-%d-%H-%M')
 
         self.cnt = 0
     def findIndexName(self):
-        now = datetime.now().minute
+        now = datetime.now(timezone('Asia/Seoul')).minute
         # print("current minute", now)
         if now < 29:
-            self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"00"
+            self.index_name = "product-"+datetime.now(timezone('Asia/Seoul')).strftime('%Y-%m-%d-%H-')+"00"
         else:
-            self.index_name = "product-"+datetime.now().strftime('%Y-%m-%d-%H-')+"30"
+            self.index_name = "product-"+datetime.now(timezone('Asia/Seoul')).strftime('%Y-%m-%d-%H-')+"30"
 
     def start_crwal(self):
         self.findIndexName()
         data = {}
         data["index"]=self.index_name
-        # print(data)
+        print(data)
         self.producer.send("street-test",value=data)
         self.producer.flush()
         
@@ -161,7 +161,7 @@ class st11_crawling:
                             data["cat"] = "제과/빵"
                         else: continue
                         kafka={"data":data}
-                        print(kafka)
+                        print(name_url["content_name"])
                         self.pushData(kafka)
 
 

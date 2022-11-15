@@ -1,4 +1,3 @@
-certifi @ file:///C:/b/abs_ac29jvt43w/croot/certifi_1665076682579/work/certifi
 elasticsearch==7.17.3
 kafka-python==2.0.2
 urllib3==1.26.12
