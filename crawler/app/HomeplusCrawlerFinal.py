@@ -23,15 +23,16 @@ def __main__ ():
 
 class st11_crawling:
     def __init__(self):
-        self.host = 'my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc'
+        # self.host = 'my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc'
+        self.host = "127.0.0.1"
         self.kafka_port = '9092'
         self.producer=KafkaProducer(acks=0, 
             compression_type='gzip',
             bootstrap_servers=[self.host + ":"+ self.kafka_port],
             value_serializer=lambda x: dumps(x).encode('utf-8')
           )
-        # self.driver_path = "./chromedriver.exe"
-        self.driver_path = "/usr/src/chrome/chromedriver"
+        self.driver_path = "./chromedriver.exe"
+        # self.driver_path = "/usr/src/chrome/chromedriver"
         self.chrome_options = Options()
         self.chrome_options.add_argument('window-size=1280,1000')
         self.chrome_options.add_argument('--no-sandbox')
@@ -92,15 +93,8 @@ class st11_crawling:
         print("crawler finish")
         data = {}
         data["finish"]=self.index_name
-        # self.elasticAPI.createIndex(data["index"])
         self.producer.send("home-test",value=data)
         self.producer.flush()
-        data = {}
-        data["next"]=self.index_name
-        # self.elasticAPI.createIndex(data["index"])
-        self.producer.send("kakao-test",value=data)
-        self.producer.flush()
-
 
     def getData(self, soup, idx):
         cnt =0
@@ -136,6 +130,7 @@ class st11_crawling:
                             data["price"] = dprice
                             data["purchase"]  = int(buyer)
                             data["cat"] = categoryName
+                            data["index"] = self.index_name
                             kafka={"data":data}
                             self.pushData(kafka)
                         except Exception as e:
@@ -150,121 +145,6 @@ class st11_crawling:
     def pushData(self, data):
         self.producer.send("home-test",value=data)
         self.producer.flush()
-        
-        # sql = "insert into homeplus_product(imgsrc, prdname, weburl, purchase, cat, price) values (%s, %s, %s, %s, %s, %s)".format()
-        # print(data)
-        # self.cur.execute(sql, (data["imgSrc"],data["prdName"] , data["webUrl"],data["purchase"] , data["cat"] ,data["price"]))
-        # self.con.commit()  
-    
-    # def normalize(self):
-    #     print("start normalize")
-    #     for cat in self.categories:
-    #         try:
-    #             res = es.search(
-    #                 index=self.index_name, 
-                    
-    #                 body={
-    #                     "size": 0,
-    #                     "query":{"match":{"site":"home" },
-    #                             "match":{"cat":cat}},
-    #                     "aggs": {
-    #                         "test": {
-    #                         "max": { "field": "purchase"}
-    #                         }
-    #                 }
-    #                 }
-    #             )
-    #             # print(res)
-    #             # print(res["aggregations"]["test"]["value"])
-    #             # print(cat)
-    #             # 업데이트 쿼리
-    #             res2= es.update_by_query(
-    #                 index=self.index_name,  
-    #                 body = {
-    #             "query" :{
-    #                 "bool": {
-    #                         "must":[
-    #                         {"match": {"site": "home"}},
-    #                         { "match":{"cat":cat}}
-    #                 ]
-    #                 }
-    #             }, 
-    #             "script": {
-    #             "source":"ctx._source.score =ctx._source.score * 1/{};".format(str(int(res["aggregations"]["test"]["value"]))),
-    #             "lang": "painless"
-    #             }  }
-    #             )
-    #             # print("res2", res2)
-    #         except Exception as e:
-    #             print(e)
-        # print("end normalize")
-
-# es = Elasticsearch(hosts="127.0.0.1", port=9200)
-# class ElaAPI:
-    
-#        # 객체 생성
-#     def deleteIndex(self, str_index):
-#         es.indices.delete(index=str_index, ignore=[400, 404])
-
-#     def allIndex(self):
-#         print (es.cat.indices())
-
-#     def dataInsert(self, docs):
-#         # ===============
-#         # 데이터 삽입
-#         # ===============
-#         helpers.bulk(es, docs)
-
-#     def searchAll(self, index):
-#         res = es.search(
-#             index = index, 
-#             body = {
-#                 "query":{"match_all":{}}
-#             }
-#         )
-#         print (json.dumps(res, ensure_ascii=False, indent=4))
-
-
-#     def createIndex(self, date):
-#         # ===============
-#         # 인덱스 생성
-#         # ===============
-#         index = "product-" + date
-  
-#         if es.indices.exists(index=index):
-#             pass
-#         else:
-#             es.indices.create(
-#             index = index,
-#             body = {
-#                 "settings": {
-#                     "analysis": {
-#                         "analyzer": {
-#                             "content": {
-#                                 "type": "custom",
-#                                 "tokenizer": "nori_tokenizer",
-#                                 "decompound_mode": "mixed"
-#                                 }
-      
-#                         }
-#                     }
-#                 },
-#                 "mappings": {
-                
-#                         "properties": {
-#                             "imgSrc":    {"type": "text"},
-#                             "prdName": {"type": "text","analyzer": "content"},
-#                             "webUrl":    {"type": "text"},
-#                             "purchase":    {"type": "text"},
-#                             "subcat":   {"type": "text"},
-#                             "site":     {"type": "text"},
-#                             "cat":   {"type": "text"},
-#                             "price":     {"type": "integer"},
-#                             "score":   {"type": "float"}
-#                             }
-                        
-#                     }
-#                 }
-#             )
+     
 
 __main__()

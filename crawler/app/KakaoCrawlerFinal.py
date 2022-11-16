@@ -18,8 +18,8 @@ def __main__ ():
 #--------------크롤링 시작 ------------------------------   
 class kakao_crawling:
     def __init__(self):
-        self.host = 'my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc'
-        # self.host = "localhost"
+        # self.host = 'my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc'
+        self.host = "localhost"
         self.kafka_port = '9092'
         self.producer=KafkaProducer(acks=0, 
             compression_type='gzip',
@@ -28,8 +28,8 @@ class kakao_crawling:
           )
 
         self.index_name =""
-        self.driver_path = "/usr/src/chrome/chromedriver"
-        # self.driver_path = "./chromedriver.exe"
+        # self.driver_path = "/usr/src/chrome/chromedriver"
+        self.driver_path = "./chromedriver.exe"
         self.chrome_options = Options()
         self.chrome_options.add_argument('window-size=1280,1000')
         self.chrome_options.add_argument('--no-sandbox')
@@ -87,13 +87,6 @@ class kakao_crawling:
         print("start crawl")
         data = {}
         self.findIndexName()
-        data["index"]=self.index_name
-        print("현재시간 : ", self.index_name)
-        # print(self.elasticAPI.allIndex())
-        # print(data)
-        self.producer.send("kakao-test",value=data)
-        self.producer.flush()
-        soup=""
         for site in self.siteList:
             print(site)
             print(self.driver)
@@ -114,7 +107,6 @@ class kakao_crawling:
             while True:
                 try:
                     for i in range(4):
-                        print("여긴도나?")
                         self.driver.find_element_by_xpath("/html/body/fu-app-root/fu-wrapper/div/div/fu-pw-category-result/div/div/cu-pagination-list/div/div[2]/div/button[{}]".format(str(1+i))).click()
                         time.sleep(1)
                         html = self.driver.page_source
@@ -150,12 +142,6 @@ class kakao_crawling:
         self.producer.send("kakao-test",value=data)
         self.producer.flush()
         #time.sleep(1)
-        data = {}
-        data["next"]=self.index_name
-        # self.elasticAPI.createIndex(data["index"])
-        self.producer.send("kakao-test",value=data)
-        self.producer.flush()
-        #self.normalize()
 
     def getData(self, soup, cat):
         # print("파싱하나?")
@@ -201,6 +187,7 @@ class kakao_crawling:
                 data["price"] = price
                 data["purchase"]  = purch
                 data["cat"] = cat
+                data["index"] = self.index_name
                 kafka={"data":data}
                 self.pushData(kafka)
         return cnt

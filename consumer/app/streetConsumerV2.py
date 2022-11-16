@@ -9,8 +9,7 @@ import time
 from elasticsearch import Elasticsearch, helpers
 
  
-es = Elasticsearch(hosts="192.168.56.110", port=9200)
-client = ElaAPI()
+
  
 CatAndSubcat = {}
 CatAndSubcat["과일"]=[    "감/홍시","사과","귤","포도","열대과일","견과/밤","키위","배","토마토",
@@ -60,12 +59,16 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 ,"떡볶이/떡사리","시럽/잼","튀김류","케찹/마요네즈","떡갈비/함박스테이크","건어물"
 ,"베이컨/소시지","드레싱","새우","문어","쭈꾸미"] 
 
-consumer=KafkaConsumer("kakao-test", 
-                        bootstrap_servers=['my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc:9092'], 
+es = Elasticsearch(hosts="127.0.0.1", port=9200)
+client = ElaAPI()
+
+consumer=KafkaConsumer("street-test", 
+                        bootstrap_servers=['my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc:9092'], 
+                        # bootstrap_servers=["localhost:9092"],
                         auto_offset_reset="earliest",
                         auto_commit_interval_ms=100,
                         enable_auto_commit=False, 
-                        group_id='kakao-group', 
+                        group_id='street-group', 
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
                         consumer_timeout_ms=1000 
             )
@@ -179,35 +182,40 @@ def __main__():
     es_index = ""
     print("start street")
     res = ""
+    cnt =0
     while True:
+        if cnt >= 200: break
         if res != "": print(res);break
         data_list = []
         for message in consumer:
+            consumer.commit()
             docs = {}
-            value=message.value
-            # print(value)
-            if "index" in value:   
-                es_index =value["index"]
-                print("es_index", es_index) 
-                time.sleep(1)
-                continue
-            if "finish" in value:
+            try:
+                value=message.value
+                if "finish" in value:
+                    print(value)
+                    res = "test"
+                    time.sleep(1)
+                    break
+                
+                data = value["data"]
+                docs["_index"]= data["index"]
+                es_index=data["index"]
+                data['subcat']=classifier(data)
+                data["site"] ="11번가"
+                data["score"] =float(0)
+                docs["_source"] = data
+                data_list.append(docs)
+            except Exception as e:
                 print(value)
-                res = "test"
-                time.sleep(1)
-                break
-            docs["_index"]= es_index
-            data = value["data"]
-            data['subcat']=classifier(data)
-            data["site"] ="11번가"
-            data["score"] =float(0)
-            docs["_source"] = data
-            data_list.append(docs)
+                print(e)
         try:
             if data_list ==[]: 
+                cnt+=1
                 print("continue")
                 continue
-            client.dataInsert(data_list)
+            print(data_list[0], len(data_list))
+            # client.dataInsert(data_list)
             print("success insert")
         except:
             print("continue")
@@ -215,5 +223,5 @@ def __main__():
     normalize(es_index)
     deleteIndexName = beforeTime(es_index)
     print("deleteIndexName : ", deleteIndexName)
-    deleteIndex(deleteIndexName)
+    # deleteIndex(deleteIndexName)
 __main__()

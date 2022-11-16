@@ -9,11 +9,7 @@ import time
 from elasticsearch import Elasticsearch, helpers
 
  
-es = Elasticsearch(hosts="192.168.56.110", port=9200)
 
-
-client = ElaAPI()
-index_date = datetime.now().strftime('%Y-%m-%d-%H-%M')
  
 
 CatAndSubcat = {}
@@ -64,13 +60,22 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 ,"떡볶이/떡사리","시럽/잼","튀김류","케찹/마요네즈","떡갈비/함박스테이크","건어물"
 ,"베이컨/소시지","드레싱","새우","문어","쭈꾸미"]
 
+
+
+es = Elasticsearch(hosts="127.0.0.1", port=9200)
+
+
+client = ElaAPI()
+index_date = datetime.now().strftime('%Y-%m-%d-%H-%M')
  
-consumer=KafkaConsumer("kakao-test", 
-                        bootstrap_servers=['my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc:9092'], 
+consumer=KafkaConsumer("home-test", 
+                        # bootstrap_servers=['my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc:9092'], 
+                        bootstrap_servers=['127.0.0.1:9092'], 
+
                         auto_offset_reset="earliest",
                         auto_commit_interval_ms=100,
-                        enable_auto_commit=False, 
-                        group_id='kakao-group', 
+                        enable_auto_commit=True, 
+                        group_id='home-group', 
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
                         consumer_timeout_ms=1000 
             )
@@ -123,7 +128,7 @@ def normalize(indexName):
                     "lang": "painless"
                     }  }
                     )
-                    print("norm res2", res2)
+                    # print("norm res2", res2)
                 except Exception as e:
                     print(e)
         print("end normalize")
@@ -154,44 +159,7 @@ def classifier(data):
  
     return subcat
  
-es_index = ""
-print("start home")
-res = 0
-while True:
-    if res == 1: break
-    data_list = []
-    cnt = 0
-    for message in consumer:
-        docs = {}
 
-        value=message.value
-        
-        # print(value)
-        if "index" in value:   
-            es_index =value["index"]
-            print("es_index", es_index) 
-            time.sleep(1)
-            continue
-        if "finish" in value:
-            res = 1
-            break
-        docs["_index"]= es_index
-        data = value["data"]
-        data['subcat']=classifier(data)
-        data["site"] ="홈플러스"
-        data["score"] =float(0)
-        docs["_source"] = data
-        data_list.append(docs)
- 
-    # print(data_list)
-    try:
-        if data_list ==[]: 
-            print("continue")
-            continue
-        client.dataInsert(data_list)
-        print("success insert")
-    except:
-        continue
 import datetime
 def beforeTime(time):
     data  = time.split("-")
@@ -205,7 +173,10 @@ def beforeTime(time):
             data[-2], data[-1] = str(23), str(60+remain)
         else:
             data[-2], data[-1] =  str(hour-1), str(60+remain)
-    
+    if data[-1] == "0":
+        data[-1]="00"
+    if len(data[-2]) == 1:
+        data[-2]= "0" + data[-2]  
     return "-".join(data)
 
 def deleteIndex(deleteIndexName):
@@ -215,46 +186,52 @@ def __main__():
     es_index = ""
     print("start home")
     res = 0
+    cnt =0
     while True:
-        if res == 1: break
+        if cnt >= 200: break
+        if res == 1: 
+            print(res)
+            break
         data_list = []
         cnt = 0
         for message in consumer:
+            consumer.commit()
             docs = {}
+            try:
+                value=message.value
+                if "finish" in value:
 
-            value=message.value
+                    print("finish", value)
+                    res = 1
+                    break
+                data = value["data"]
+                docs["_index"]= data["index"]
+                es_index=data["index"]
+                data['subcat']=classifier(data)
+                data["site"] ="홈플러스"
+                data["score"] =float(0)
+                docs["_source"] = data
+                data_list.append(docs)
+            except Exception as e:
+                print(value)
+                print("consumer error : ", e)
             
-            # print(value)
-            if "index" in value:   
-                es_index =value["index"]
-                print("es_index", es_index) 
-                time.sleep(1)
-                continue
-            if "finish" in value:
-                print("finish")
-                res = 1
-                break
-            docs["_index"]= es_index
-            data = value["data"]
-            data['subcat']=classifier(data)
-            data["site"] ="홈플러스"
-            data["score"] =float(0)
-            docs["_source"] = data
-            data_list.append(docs)
-    
-        # print(data_list)
+                
         try:
             if data_list ==[]: 
                 print("continue")
+                cnt += 1
                 continue
+            print(data_list[0])
             client.dataInsert(data_list)
             print("success insert")
         except:
             continue
-
+    
     normalize(es_index)
-
+    print("es_index : ", es_index)
     deleteIndexName = beforeTime(es_index)
+    print(deleteIndexName)
     deleteIndex(deleteIndexName)
     # print(deleteIndexName)
 

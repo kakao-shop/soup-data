@@ -9,7 +9,7 @@ import time
 from elasticsearch import Elasticsearch, helpers
 
  
-es = Elasticsearch(hosts="192.168.56.110", port=9200)
+es = Elasticsearch(hosts="127.0.0.1", port=9200)
 client = ElaAPI()
  
 CatAndSubcat = {}
@@ -62,9 +62,10 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 
 
 consumer=KafkaConsumer("kakao-test", 
-                        bootstrap_servers=['my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc:9092'], 
+                        # bootstrap_servers=['my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc:9092'],
+                        bootstrap_servers=['127.0.0.1:9092'], 
                         auto_offset_reset="earliest",
-                        auto_commit_interval_ms=100,
+                        auto_commit_interval_ms=10,
                         enable_auto_commit=False, 
                         group_id='kakao-group', 
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
@@ -118,7 +119,7 @@ def normalize(indexName):
                     )
                     # print("res2", res2)
                 except Exception as e:
-                    print(e)
+                    print("구매 이력이 없으면 오류 ", e)
         print("end normalize")
 
 
@@ -180,41 +181,46 @@ def __main__():
     es_index = ""
     print("start kakao")
     res = ""
+    cnt =0
     while True:
+        if cnt >= 200: break
         if res != "": break
         data_list = []
         for message in consumer:
+            consumer.commit()
             docs = {}
+            try:
+                value=message.value
+            
+                if "finish" in value:
+                    print("????")
+                    res = "test"
+                    time.sleep(1)
+                    break
+                data = value["data"]
+                docs["_index"]= data["index"]
+                data['subcat']=classifier(data)
+                data["site"] ="카카오 쇼핑"
+                data["score"] =float(0)
+                docs["_source"] = data
+                es_index=data["index"]
 
-            value=message.value
-            if "index" in value:   
-                es_index =value["index"]
-                print("es_index", es_index) 
-                time.sleep(1)
-                continue
-            if "finish" in value:
-                print("????")
-                res = "test"
-                time.sleep(1)
-                break
-            docs["_index"]= es_index
-            data = value["data"]
-            data['subcat']=classifier(data)
-            data["site"] ="카카오 쇼핑"
-            data["score"] =float(0)
-            docs["_source"] = data
-
-            print(docs)
-            data_list.append(docs)
+                data_list.append(docs)
+            except Exception as e:
+                print(value)
+                print("consumer error : " , e)
         try:
             if data_list ==[]: 
+                cnt+=1
                 print("continue")
                 continue
             client.dataInsert(data_list)
             print("success insert")
+
         except:
-            print("continue")
+            print("insert error")
             continue
+    print(es_index)
     normalize(es_index)
     deleteIndexName = beforeTime(es_index)
     print(deleteIndexName)

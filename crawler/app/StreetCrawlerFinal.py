@@ -22,21 +22,19 @@ def __main__ ():
 
 class st11_crawling:
     def __init__(self):
-
-        # self.client = MongoClient('mongodb://127.0.0.1:27017', authSource='admin')
-        # self.homeplus = self.client["DATAETL"]['Street']
-        self.host = 'my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc'
-        self.kafka_port = '9092'
+        # self.host = "127.0.0.1"
+        self.bootstrap_servers = ["my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc:9092"]
+        # self.kafka_port = '9092'
         self.producer=KafkaProducer(
             acks=0, 
             compression_type='gzip',
-            bootstrap_servers=[self.host + ":"+ self.kafka_port],
+            # bootstrap_servers=[self.host + ":"+ self.kafka_port],
+            bootstrap_servers=self.bootstrap_servers,
             value_serializer=lambda x: dumps(x).encode('utf-8'),
             linger_ms=1000
 
           )
         # self.driver_path = "./chromedriver.exe"
-        #  C:/Users/kjh19/OneDrive/바탕 화면/test/chromedriver.exe // 노트북
         self.driver_path = "/usr/src/chrome/chromedriver"
         self.chrome_options = Options()
         self.chrome_options.add_argument('window-size=1280,1000')
@@ -57,12 +55,8 @@ class st11_crawling:
             self.index_name = "product-"+datetime.now(timezone('Asia/Seoul')).strftime('%Y-%m-%d-%H-')+"30"
 
     def start_crwal(self):
+        print("street crawler start")
         self.findIndexName()
-        data = {}
-        data["index"]=self.index_name
-        print(data)
-        self.producer.send("street-test",value=data)
-        self.producer.flush()
         
         self.driver.get("https://deal.11st.co.kr/browsing/DealAction.tmall?method=getCategory&dispCtgrNo=947161")
         time.sleep(1)
@@ -96,16 +90,12 @@ class st11_crawling:
             cnt += a_cnt
         # print(set(self.category))
     
-        # print("crawler finish")
+        print("crawler finish")
         data = {}
         data["finish"]=self.index_name
         # self.elasticAPI.createIndex(data["index"])st
+        print(data)
         self.producer.send("street-test",value=data)
-        self.producer.flush()
-        data = {}
-        data["next"]=self.index_name
-        # self.elasticAPI.createIndex(data["index"])
-        self.producer.send("kakao-test",value=data)
         self.producer.flush()
 
 
@@ -128,19 +118,15 @@ class st11_crawling:
                         purchases = data.select_one("li > div > a > div.prd_info > span").get_text()
                         self.category.append(categoryName)
 
-                        # print("name", name_url["content_name"])
-                        # print("img_src", img_src)
-                        # print("web_url", web_url)
-                        # print("categoryName", categoryName)
-                        # print("last_discount_price", name_url["last_discount_price"])
-                        # print("purchases : ", purchases)
                         data = {}
                         data["imgSrc" ] =img_src
                         data["prdName" ] = name_url["content_name"]
+                        print(name_url["content_name"])
                         data["webUrl" ] = web_url
                         data["price"] = int(re.sub(r"[^0-9]", "", name_url["last_discount_price"]))  
                         data["purchase"]  = int(re.sub(r"[^0-9]", "", purchases))
                         data["cat"] = categoryName
+                        data["index"] = self.index_name
                         if categoryName == "채소류":
                             data["cat"] = "채소"
                         elif categoryName == "과일/견과":
@@ -160,7 +146,9 @@ class st11_crawling:
                         elif categoryName == "과자/간식":
                             data["cat"] = "제과/빵"
                         else: continue
+
                         kafka={"data":data}
+
                         print(name_url["content_name"])
                         self.pushData(kafka)
 
@@ -168,7 +156,7 @@ class st11_crawling:
                         # url = data.select_one("li > div > a")["href"]
                         # print(url)
                     except Exception as e:
-                        print(e, " ???? ")
+                        print(e, " don't worry ")
                     #print(cnt, data)
                     # print("=====================================e")
             
