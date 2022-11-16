@@ -1,16 +1,16 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: street-consumer
+  name: home-crawler
 spec:
-  schedule: "20,50 * * * *" # 1
+  schedule: "*/30 * * * *" # 1
   jobTemplate:
     spec:
       ttlSecondsAfterFinished: 10
       template:
         spec:
           containers:
-          - name: street-consumer
-            image: aam411/street-consumer:3.0
+          - name: producer
+            image: aam411/home-crawler:1.100
             imagePullPolicy: IfNotPresent
           restartPolicy: Never

@@ -18,18 +18,19 @@ def __main__ ():
 #--------------크롤링 시작 ------------------------------   
 class kakao_crawling:
     def __init__(self):
-        # self.host = 'my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc'
-        self.host = "localhost"
-        self.kafka_port = '9092'
+        self.bootstrap_server = ['my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc:9092']
+        # self.host = "localhost"
+        # self.kafka_port = '9092'
         self.producer=KafkaProducer(acks=0, 
             compression_type='gzip',
-            bootstrap_servers=[self.host + ":"+ self.kafka_port],
+            # bootstrap_servers=[self.host + ":"+ self.kafka_port],
+            bootstrap_servers=self.bootstrap_server,
             value_serializer=lambda x: dumps(x).encode('utf-8')
           )
 
         self.index_name =""
-        # self.driver_path = "/usr/src/chrome/chromedriver"
-        self.driver_path = "./chromedriver.exe"
+        self.driver_path = "/usr/src/chrome/chromedriver"
+        # self.driver_path = "./chromedriver.exe"
         self.chrome_options = Options()
         self.chrome_options.add_argument('window-size=1280,1000')
         self.chrome_options.add_argument('--no-sandbox')

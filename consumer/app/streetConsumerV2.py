@@ -59,7 +59,7 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 ,"떡볶이/떡사리","시럽/잼","튀김류","케찹/마요네즈","떡갈비/함박스테이크","건어물"
 ,"베이컨/소시지","드레싱","새우","문어","쭈꾸미"] 
 
-es = Elasticsearch(hosts="127.0.0.1", port=9200)
+es = Elasticsearch(hosts="192.168.56.110", port=9200)
 client = ElaAPI()
 
 consumer=KafkaConsumer("street-test", 
@@ -67,7 +67,7 @@ consumer=KafkaConsumer("street-test",
                         # bootstrap_servers=["localhost:9092"],
                         auto_offset_reset="earliest",
                         auto_commit_interval_ms=100,
-                        enable_auto_commit=False, 
+                        enable_auto_commit=True, 
                         group_id='street-group', 
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
                         consumer_timeout_ms=1000 
@@ -182,9 +182,7 @@ def __main__():
     es_index = ""
     print("start street")
     res = ""
-    cnt =0
     while True:
-        if cnt >= 200: break
         if res != "": print(res);break
         data_list = []
         for message in consumer:
@@ -215,7 +213,7 @@ def __main__():
                 print("continue")
                 continue
             print(data_list[0], len(data_list))
-            # client.dataInsert(data_list)
+            client.dataInsert(data_list)
             print("success insert")
         except:
             print("continue")
@@ -223,5 +221,5 @@ def __main__():
     normalize(es_index)
     deleteIndexName = beforeTime(es_index)
     print("deleteIndexName : ", deleteIndexName)
-    # deleteIndex(deleteIndexName)
+    deleteIndex(deleteIndexName)
 __main__()

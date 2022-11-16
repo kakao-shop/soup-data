@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: home-consumer
+spec:
+  schedule: "20,50 * * * *" # 1
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 10
+      template:
+        spec:
+          containers:
+          - name: home-consumer
+            image: aam411/k8shomeconsumer:2.0
+            imagePullPolicy: IfNotPresent
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kakao-consumer
+spec:
+  schedule: "20,50 * * * *" # 1
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 10
+      template:
+        spec:
+          containers:
+          - name: kakao-consumer
+            image: aam411/k8skakaoconsumer:2.0
+            imagePullPolicy: IfNotPresent
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: street-consumer
+spec:
+  schedule: "20,50 * * * *" # 1
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 10
+      template:
+        spec:
+          containers:
+          - name: street-consumer
+            image: aam411/k8sstreetconsumer:2.0
+            imagePullPolicy: IfNotPresent
+          restartPolicy: Never

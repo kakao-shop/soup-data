@@ -9,8 +9,7 @@ import time
 from elasticsearch import Elasticsearch, helpers
 
  
-es = Elasticsearch(hosts="127.0.0.1", port=9200)
-client = ElaAPI()
+
  
 CatAndSubcat = {}
 CatAndSubcat["과일"]=[    "감/홍시","사과","귤","포도","열대과일","견과/밤","키위","배","토마토",
@@ -61,12 +60,17 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 ,"베이컨/소시지","드레싱","새우","문어","쭈꾸미"]
 
 
+es = Elasticsearch(hosts="192.168.56.110", port=9200)
+
+client = ElaAPI()
+
+
 consumer=KafkaConsumer("kakao-test", 
-                        # bootstrap_servers=['my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc:9092'],
-                        bootstrap_servers=['127.0.0.1:9092'], 
+                        bootstrap_servers=['my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc:9092'],
+                        # bootstrap_servers=['127.0.0.1:9092'], 
                         auto_offset_reset="earliest",
                         auto_commit_interval_ms=10,
-                        enable_auto_commit=False, 
+                        enable_auto_commit=True, 
                         group_id='kakao-group', 
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
                         consumer_timeout_ms=1000 
@@ -181,9 +185,7 @@ def __main__():
     es_index = ""
     print("start kakao")
     res = ""
-    cnt =0
     while True:
-        if cnt >= 200: break
         if res != "": break
         data_list = []
         for message in consumer:

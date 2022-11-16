@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: street-crawler
+spec:
+  schedule: "*/30 * * * *" # 1
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 10
+      template:
+        spec:
+          containers:
+          - name: street-crawler
+            image: aam411/k8sstreetcrawler:2.0
+            imagePullPolicy: IfNotPresent
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kakao-crawler
+spec:
+  schedule: "*/30 * * * *" # 1
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 10
+      template:
+        spec:
+          containers:
+          - name: kakao-crawler
+            image: aam411/k8skakaocrawler:2.0
+            imagePullPolicy: IfNotPresent
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: home-crawler
+spec:
+  schedule: "*/30 * * * *" # 1
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 10
+      template:
+        spec:
+          containers:
+          - name: home-crawler
+            image: aam411/k8shomecrawler:2.0
+            imagePullPolicy: IfNotPresent
+          restartPolicy: Never

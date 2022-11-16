@@ -62,15 +62,15 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 
 
 
-es = Elasticsearch(hosts="127.0.0.1", port=9200)
+es = Elasticsearch(hosts="192.168.56.110", port=9200)
 
 
 client = ElaAPI()
 index_date = datetime.now().strftime('%Y-%m-%d-%H-%M')
  
 consumer=KafkaConsumer("home-test", 
-                        # bootstrap_servers=['my-cluster-kafka-2.my-cluster-kafka-brokers.default.svc:9092'], 
-                        bootstrap_servers=['127.0.0.1:9092'], 
+                        bootstrap_servers=['my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc:9092'], 
+                        # bootstrap_servers=['127.0.0.1:9092'], 
 
                         auto_offset_reset="earliest",
                         auto_commit_interval_ms=100,
@@ -186,9 +186,7 @@ def __main__():
     es_index = ""
     print("start home")
     res = 0
-    cnt =0
     while True:
-        if cnt >= 200: break
         if res == 1: 
             print(res)
             break
@@ -223,7 +221,7 @@ def __main__():
                 cnt += 1
                 continue
             print(data_list[0])
-            client.dataInsert(data_list)
+            # client.dataInsert(data_list)
             print("success insert")
         except:
             continue
@@ -233,6 +231,6 @@ def __main__():
     deleteIndexName = beforeTime(es_index)
     print(deleteIndexName)
     deleteIndex(deleteIndexName)
-    # print(deleteIndexName)
+    print(deleteIndexName)
 
 __main__()
