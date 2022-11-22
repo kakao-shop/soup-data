@@ -23,7 +23,7 @@ def __main__ ():
 
 class st11_crawling:
     def __init__(self):
-        self.bootstrap_servers = ['my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc:9092']
+        self.bootstrap_servers = ['localhost:9092']
         # self.host = "127.0.0.1"
         # self.kafka_port = '9092'
         self.producer=KafkaProducer(acks=0, 
@@ -32,17 +32,17 @@ class st11_crawling:
             bootstrap_servers=self.bootstrap_servers,
             value_serializer=lambda x: dumps(x).encode('utf-8')
           )
-        # self.driver_path = "./chromedriver.exe"
-        self.driver_path = "/usr/src/chrome/chromedriver"
+        self.driver_path = "./chromedriver.exe"
+        #self.driver_path = "/usr/src/chrome/chromedriver"
         self.chrome_options = Options()
         self.chrome_options.add_argument('window-size=1280,1000')
         self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--headless')
         self.chrome_options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
-        self.subList = ["과일", "채소", "채소", "축산","수산/건어물", "유제품/냉장/냉동", "제과/빵" , "면류/즉석식품/양념/오일", "쌀/잡곡", "생수/음료/커피"]
+        self.subList = ["과일", "채소", "채소", "축산","수산/건어물", "냉장/냉동식품", "제과/빵" , "즉석식품/양념", "쌀/잡곡", "생수/음료"]
         self.cnt = 0
-        self.categories =['과일','채소','쌀/잡곡', '축산', '수산/건어물','유제품/냉장/냉동','제과/빵','면류/즉석식품/양념/오일','생수/음료/커피']
+        self.categories =['과일','채소','쌀/잡곡', '축산', '수산/건어물','냉장/냉동식품','제과/빵','즉석식품/양념','생수/음료']
         self.index_name = "product-"+datetime.now(timezone('Asia/Seoul')).strftime('%Y-%m-%d-%H-%M')
 
     def findIndexName(self):

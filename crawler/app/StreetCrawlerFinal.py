@@ -23,7 +23,7 @@ def __main__ ():
 class st11_crawling:
     def __init__(self):
         # self.host = "127.0.0.1"
-        self.bootstrap_servers = ["my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc:9092"]
+        self.bootstrap_servers = ["localhost:9092"]
         # self.kafka_port = '9092'
         self.producer=KafkaProducer(
             acks=0, 
@@ -34,8 +34,8 @@ class st11_crawling:
             linger_ms=1000
 
           )
-        # self.driver_path = "./chromedriver.exe"
-        self.driver_path = "/usr/src/chrome/chromedriver"
+        self.driver_path = "./chromedriver.exe"
+        #self.driver_path = "/usr/src/chrome/chromedriver"
         self.chrome_options = Options()
         self.chrome_options.add_argument('window-size=1280,1000')
         self.chrome_options.add_argument('--no-sandbox')
@@ -47,7 +47,7 @@ class st11_crawling:
 
         self.cnt = 0
     def findIndexName(self):
-        now = datetime.now(timezone('Asia/Seoul')).minute
+        now = datetime.now(timezone('Asia/Seoul')).minutec
         # print("current minute", now)
         if now < 29:
             self.index_name = "product-"+datetime.now(timezone('Asia/Seoul')).strftime('%Y-%m-%d-%H-')+"00"
@@ -134,11 +134,11 @@ class st11_crawling:
                         elif categoryName == "축산물":
                             data["cat"] = "축산"
                         elif categoryName in [ "차/전통음료", "커피", "전통주", "생수/음료","홍삼/건강즙"]:
-                            data["cat"] = "생수/음료/커피"
+                            data["cat"] = "생수/음료"
                         elif categoryName == "우유/두유":
-                            data["cat"] = "유제품/냉장/냉동"
+                            data["cat"] = "냉장/냉동식품"
                         elif categoryName in ["라면/즉석식품","조미료/소스류","통조림/식용유/잼"]:
-                            data["cat"] = "면류/즉석식품/양념/오일"
+                            data["cat"] = "즉석식품/양념"
                         elif categoryName == "쌀/잡곡류":
                             data["cat"] = "쌀/잡곡"
                         elif categoryName == "수산물":

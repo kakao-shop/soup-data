@@ -9,8 +9,8 @@ import pandas as pd
 import RuleBaseClassifier
 # meat : 축산
 # veget : 채소
-# water : 생수/음료/커피
-# mik_ref : 유제품/냉장/냉동
+# water : 생수/음료
+# mik_ref : 냉장/냉동식품
 # retro : 면류/양념/오일
 # ssal : 쌀/잡곡
 # pastry : 제과/빵
@@ -48,11 +48,11 @@ while True:
             data['subcat']=ruleBaseClassifier.meat(data["prdName"])
         elif data["cat"] =="채소":
             data['subcat']=ruleBaseClassifier.veget(data["prdName"])
-        elif data["cat"] =="생수/음료/커피":
+        elif data["cat"] =="생수/음료":
             data['subcat']=ruleBaseClassifier.water(data["prdName"])
-        elif data["cat"] =="유제품/냉장/냉동":
+        elif data["cat"] =="냉장/냉동식품":
             data['subcat']=ruleBaseClassifier.mik_ref(data["prdName"])
-        elif data["cat"] =="면류/즉석식품/양념/오일":
+        elif data["cat"] =="즉석식품/양념":
             data['subcat']=ruleBaseClassifier.retro(data["prdName"])
         elif data["cat"] =="쌀/잡곡":
             data['subcat']=ruleBaseClassifier.ssal(data["prdName"])

@@ -18,7 +18,7 @@ def __main__ ():
 #--------------크롤링 시작 ------------------------------   
 class kakao_crawling:
     def __init__(self):
-        self.bootstrap_server = ['my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc:9092']
+        self.bootstrap_server = ['localhost:9092']
         # self.host = "localhost"
         # self.kafka_port = '9092'
         self.producer=KafkaProducer(acks=0, 
@@ -29,8 +29,8 @@ class kakao_crawling:
           )
 
         self.index_name =""
-        self.driver_path = "/usr/src/chrome/chromedriver"
-        # self.driver_path = "./chromedriver.exe"
+        #self.driver_path = "/usr/src/chrome/chromedriver"
+        self.driver_path = "./chromedriver.exe"
         self.chrome_options = Options()
         self.chrome_options.add_argument('window-size=1280,1000')
         self.chrome_options.add_argument('--no-sandbox')
@@ -38,7 +38,7 @@ class kakao_crawling:
         self.chrome_options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(self.driver_path, chrome_options=self.chrome_options)
         self.titleList = []
-        self.subList = ["과일", "채소", "채소", "축산","수산/건어물", "유제품/냉장/냉동", "제과/빵" , "면류/즉석식품/양념/오일", "쌀/잡곡", "생수/음료/커피"]
+        self.subList = ["과일", "채소", "채소", "축산","수산/건어물", "냉장/냉동식품", "제과/빵" , "즉석식품/양념", "쌀/잡곡", "생수/음료"]
         self.siteList =  [                       
             ["https://store.kakao.com/category/3/102104103?level=2", "과일"],
             ["https://store.kakao.com/category/3/102104101?level=2" , "채소"],
@@ -51,30 +51,30 @@ class kakao_crawling:
             ["https://store.kakao.com/category/3/102104105?level=2", "수산/건어물"] , 
             ["https://store.kakao.com/category/3/102104109?level=2", "수산/건어물"],
             ["https://store.kakao.com/category/3/102104117?level=2", "수산/건어물"],
-            ["https://store.kakao.com/category/3/102104102?level=2","유제품/냉장/냉동"],
-            ["https://store.kakao.com/category/3/102104100?level=2", "유제품/냉장/냉동"],
-            ["https://store.kakao.com/category/3/102100100?level=2" ,"유제품/냉장/냉동"],
-            ["https://store.kakao.com/category/3/102100112?level=2" ,"유제품/냉장/냉동"],
-            ["https://store.kakao.com/category/3/102100118?level=2" , "유제품/냉장/냉동"],
-            ["https://store.kakao.com/category/3/102100111?level=2", "유제품/냉장/냉동"],
+            ["https://store.kakao.com/category/3/102104102?level=2","냉장/냉동식품"],
+            ["https://store.kakao.com/category/3/102104100?level=2", "냉장/냉동식품"],
+            ["https://store.kakao.com/category/3/102100100?level=2" ,"냉장/냉동식품"],
+            ["https://store.kakao.com/category/3/102100112?level=2" ,"냉장/냉동식품"],
+            ["https://store.kakao.com/category/3/102100118?level=2" , "냉장/냉동식품"],
+            ["https://store.kakao.com/category/3/102100111?level=2", "냉장/냉동식품"],
             ["https://store.kakao.com/category/3/102109?level=1", "제과/빵"],
-            [ "https://store.kakao.com/category/3/102100101?level=2", "면류/즉석식품/양념/오일"],
-            [ "https://store.kakao.com/category/3/102100103?level=2", "면류/즉석식품/양념/오일"],
-            [ "https://store.kakao.com/category/3/102100104?level=2", "면류/즉석식품/양념/오일"],
-            [ "https://store.kakao.com/category/3/102100105?level=2", "면류/즉석식품/양념/오일"],
-            [ "https://store.kakao.com/category/3/102100109?level=2", "면류/즉석식품/양념/오일"],
-            [ "https://store.kakao.com/category/3/102100111?level=2", "면류/즉석식품/양념/오일"],
-            [ "https://store.kakao.com/category/3/102100110?level=2", "면류/즉석식품/양념/오일"],
-            [ "https://store.kakao.com/category/3/102100141?level=2", "면류/즉석식품/양념/오일"],
-            [ "https://store.kakao.com/category/3/102100124103?level=3", "면류/즉석식품/양념/오일"],
-            [ "https://store.kakao.com/category/3/102104116?level=2", "면류/즉석식품/양념/오일"],
+            [ "https://store.kakao.com/category/3/102100101?level=2", "즉석식품/양념"],
+            [ "https://store.kakao.com/category/3/102100103?level=2", "즉석식품/양념"],
+            [ "https://store.kakao.com/category/3/102100104?level=2", "즉석식품/양념"],
+            [ "https://store.kakao.com/category/3/102100105?level=2", "즉석식품/양념"],
+            [ "https://store.kakao.com/category/3/102100109?level=2", "즉석식품/양념"],
+            [ "https://store.kakao.com/category/3/102100111?level=2", "즉석식품/양념"],
+            [ "https://store.kakao.com/category/3/102100110?level=2", "즉석식품/양념"],
+            [ "https://store.kakao.com/category/3/102100141?level=2", "즉석식품/양념"],
+            [ "https://store.kakao.com/category/3/102100124103?level=3", "즉석식품/양념"],
+            [ "https://store.kakao.com/category/3/102104116?level=2", "즉석식품/양념"],
 
             [ "https://store.kakao.com/category/3/102104107?level=2", "쌀/잡곡"],
             [ "https://store.kakao.com/category/3/102100119?level=2", "쌀/잡곡"],
             [ "https://store.kakao.com/category/3/102104115?level=2", "쌀/잡곡"],
             [ "https://store.kakao.com/category/3/102104129?level=2", "쌀/잡곡"],
 
-            [ "https://store.kakao.com/category/3/102101?level=1", "생수/음료/커피"]
+            [ "https://store.kakao.com/category/3/102101?level=1", "생수/음료"]
         ]
         self.cnt = 0
     def findIndexName(self):

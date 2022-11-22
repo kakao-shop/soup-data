@@ -39,12 +39,12 @@ CatAndSubcat["제과/빵"]=[
 "초콜릿","과자","쿠키","시리얼","커피","튀김","빵","간식류소시지","떡","아이스크림"
 ,"캔디","소스"]
 
-CatAndSubcat["생수/음료/커피"]=[
+CatAndSubcat["생수/음료"]=[
     "커피","건강식품","탄산","차","과일/야채음료","생수/탄산수"
 ,"기타음료","코코아/핫초코","전통음료","꿀","이온음료"
 ]
 
-CatAndSubcat["유제품/냉장/냉동"]=[
+CatAndSubcat["냉장/냉동식품"]=[
 "김치/젓갈","밀키트","면류","요거트/요구르트","국/탕/찜","만두","반찬/절임류","아이스크림"
 ,"오일/기름","볶음/구이","우유","돈까스/너겟/치킨","과일/야채음료","두부/유부"
 ,"맛집","어묵/유부/크래미","피자/핫도그","베이컨/소시지","냉동과일"
@@ -52,7 +52,7 @@ CatAndSubcat["유제품/냉장/냉동"]=[
 ,"감자튀김/치즈스틱","떡갈비/함박스테이크","닭가슴살","두유"
 ,"계란/알류","튀김류","샌드위치/버거","기타식품","베이커리"]
 
-CatAndSubcat["면류/즉석식품/양념/오일"]=[
+CatAndSubcat["즉석식품/양념"]=[
 "국/탕/찜","즉석밥","안주/전류","죽/스프","카레/짜장","소금/설탕","스팸/햄"
 ,"도시락","참치캔","꿀","라면","통조림","소스","오일/기름","밀키트","고춧가루/참깨"
 ,"다시다/미원","볶음/구이","사리얼","고추장/된장/간장","닭가슴살","만두","맛술/액젓"
@@ -62,14 +62,14 @@ CatAndSubcat["면류/즉석식품/양념/오일"]=[
 
 
 
-es = Elasticsearch(hosts="192.168.56.110", port=9200)
+es = Elasticsearch(hosts="localhost", port=9200)
 
 
 client = ElaAPI()
 index_date = datetime.now().strftime('%Y-%m-%d-%H-%M')
  
 consumer=KafkaConsumer("home-test", 
-                        bootstrap_servers=['my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc:9092'], 
+                        bootstrap_servers=['localhost:9092'], 
                         # bootstrap_servers=['127.0.0.1:9092'], 
 
                         auto_offset_reset="earliest",
@@ -85,6 +85,8 @@ def normalize(indexName):
         print("start normalize")
         for cat in CatAndSubcat:
             for subcat in CatAndSubcat[cat]:
+                time.sleep(0.2)
+
                 try:
                     res = es.search(
                         index=indexName, 
@@ -108,8 +110,9 @@ def normalize(indexName):
                         }
                     )
                     # print("??? : " ,res)
-                    # print(res["aggregations"]["test"]["value"])
+                    print("1번 응답", res["aggregations"]["test"]["value"])
                     print(subcat)
+                    time.sleep(0.2)
                     # 업데이트 쿼리
                     res2= es.update_by_query(
                         index=indexName,  
@@ -128,7 +131,7 @@ def normalize(indexName):
                     "lang": "painless"
                     }  }
                     )
-                    # print("norm res2", res2)
+                    print("2번 응답 ", res2)
                 except Exception as e:
                     print(e)
         print("end normalize")
@@ -142,11 +145,11 @@ def classifier(data):
         subcat =ruleBaseClassifier.meat(data["prdName"])
     elif data["cat"] =="채소":
         subcat =ruleBaseClassifier.veget(data["prdName"])
-    elif data["cat"] =="생수/음료/커피":
+    elif data["cat"] =="생수/음료":
         subcat =ruleBaseClassifier.water(data["prdName"])
-    elif data["cat"] =="유제품/냉장/냉동":
+    elif data["cat"] =="냉장/냉동식품":
         subcat =ruleBaseClassifier.mik_ref(data["prdName"])
-    elif data["cat"] =="면류/즉석식품/양념/오일":
+    elif data["cat"] =="즉석식품/양념":
         subcat =ruleBaseClassifier.retro(data["prdName"])
     elif data["cat"] =="쌀/잡곡":
         subcat =ruleBaseClassifier.ssal(data["prdName"])
@@ -221,11 +224,10 @@ def __main__():
                 cnt += 1
                 continue
             print(data_list[0])
-            # client.dataInsert(data_list)
+            client.dataInsert(data_list)
             print("success insert")
         except:
             continue
-    
     normalize(es_index)
     print("es_index : ", es_index)
     deleteIndexName = beforeTime(es_index)
