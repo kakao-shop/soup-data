@@ -7,9 +7,9 @@ from kafka import KafkaConsumer
 import RuleBaseClassifier
 import time
 from elasticsearch import Elasticsearch, helpers
-
+import os
  
-
+start = time.time() 
  
 CatAndSubcat = {}
 CatAndSubcat["과일"]=[    "감/홍시","사과","귤","포도","열대과일","견과/밤","키위","배","토마토",
@@ -59,11 +59,18 @@ CatAndSubcat["즉석식품/양념"]=[
 ,"떡볶이/떡사리","시럽/잼","튀김류","케찹/마요네즈","떡갈비/함박스테이크","건어물"
 ,"베이컨/소시지","드레싱","새우","문어","쭈꾸미"] 
 
-es = Elasticsearch(hosts="localhost", port=9200)
+es_host = os.environ["ELASTICSEARCH_HOST"]
+es_port = os.environ["ELASTICSEARCH_PORT"]
+
+kafka_host = os.environ["KAFKA_HOST"]
+kafka_port = os.environ["KAFKA_PORT"]
+
+
+es = Elasticsearch(hosts=es_host, port=es_port)
 client = ElaAPI()
 
 consumer=KafkaConsumer("street-test", 
-                        bootstrap_servers=['localhost:9092'], 
+                        bootstrap_servers=[kafka_host+":"+kafka_port],
                         # bootstrap_servers=["localhost:9092"],
                         auto_offset_reset="earliest",
                         auto_commit_interval_ms=100,
@@ -185,6 +192,7 @@ def __main__():
     print("start street")
     res = ""
     while True:
+        if time.time() - start > 350: exit()
         if res != "": print(res);break
         data_list = []
         for message in consumer:

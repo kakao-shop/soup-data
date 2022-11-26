@@ -15,4 +15,4 @@ RUN pip install --upgrade pip
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
 COPY app ./app
-CMD ["python3","app/streetConsumerV2.py"]
+CMD ["python3","app/homeConsumerV2.py"]

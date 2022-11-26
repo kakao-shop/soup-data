@@ -13,17 +13,19 @@ from json import dumps
 import sys
 from datetime import datetime
 from pytz import timezone
+start = time.time() 
 def __main__ ():
     
     a = len(sys.argv)  
     st11_crawling().start_crwal() # 트리거
 
 #--------------크롤링 시작 ------------------------------   
-
+kafka_host = os.environ["KAFKA_HOST"]
+kafka_port = os.environ["KAFKA_PORT"]
 class st11_crawling:
     def __init__(self):
         # self.host = "127.0.0.1"
-        self.bootstrap_servers = ["localhost:9092"]
+        self.bootstrap_servers = [kafka_host+":"+kafka_port]
         # self.kafka_port = '9092'
         self.producer=KafkaProducer(
             acks=0, 
@@ -34,8 +36,8 @@ class st11_crawling:
             linger_ms=1000
 
           )
-        self.driver_path = "./chromedriver.exe"
-        #self.driver_path = "/usr/src/chrome/chromedriver"
+        # self.driver_path = "./chromedriver.exe"
+        self.driver_path = "/usr/src/chrome/chromedriver"
         self.chrome_options = Options()
         self.chrome_options.add_argument('window-size=1280,1000')
         self.chrome_options.add_argument('--no-sandbox')
@@ -47,7 +49,7 @@ class st11_crawling:
 
         self.cnt = 0
     def findIndexName(self):
-        now = datetime.now(timezone('Asia/Seoul')).minutec
+        now = datetime.now(timezone('Asia/Seoul')).minute
         # print("current minute", now)
         if now < 29:
             self.index_name = "product-"+datetime.now(timezone('Asia/Seoul')).strftime('%Y-%m-%d-%H-')+"00"

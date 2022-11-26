@@ -7,7 +7,7 @@ from kafka import KafkaConsumer
 import RuleBaseClassifier
 import time
 from elasticsearch import Elasticsearch, helpers
-
+import os
  
 
  
@@ -60,13 +60,24 @@ CatAndSubcat["즉석식품/양념"]=[
 ,"베이컨/소시지","드레싱","새우","문어","쭈꾸미"]
 
 
-es = Elasticsearch(hosts="localhost", port=9200)
+# es_host = "172.31.7.142:9200"
+# kafka_host = "my-cluster-kafka-0.data-mgt.svc.cluster.local:9092"
+
+es_host = os.environ["ELASTICSEARCH_HOST"]
+es_port = os.environ["ELASTICSEARCH_PORT"]
+
+kafka_host = os.environ["KAFKA_HOST"]
+kafka_port = os.environ["KAFKA_PORT"]
+
+
+
+es = Elasticsearch(hosts=es_host, port=es_port)
 
 client = ElaAPI()
 
 
 consumer=KafkaConsumer("kakao-test", 
-                        bootstrap_servers=['localhost:9092'],
+                        bootstrap_servers=[kafka_host+":"+kafka_port],
                         # bootstrap_servers=['127.0.0.1:9092'], 
                         auto_offset_reset="earliest",
                         auto_commit_interval_ms=10,
@@ -91,7 +102,7 @@ def normalize(indexName):
                             "query":{
                                     "bool": {
                                         "must":[
-                                            {"match":{"site":"카카오 쇼핑" }},
+                                            {"match":{"site":"KAKAO Commerse" }},
                                         {"match":{"cat":cat}},
                                         {"match":{"subcat":subcat}}]
                                     }
@@ -113,7 +124,7 @@ def normalize(indexName):
                     "query" :{
                         "bool": {
                                 "must":[
-                                {"match": {"site": "카카오 쇼핑"}},
+                                {"match": {"site": "KAKAO Commerse"}},
                                 {"match":{"cat":cat}},
                                 { "match":{"subcat":subcat}}
                         ]
@@ -182,13 +193,14 @@ def beforeTime(time):
     # print(data)
     return "-".join(data)
 
-
+start = time.time() 
 
 def __main__():
     es_index = ""
     print("start kakao")
     res = ""
     while True:
+        if time.time() - start > 350: exit()
         if res != "": break
         data_list = []
         for message in consumer:
@@ -205,7 +217,7 @@ def __main__():
                 data = value["data"]
                 docs["_index"]= data["index"]
                 data['subcat']=classifier(data)
-                data["site"] ="카카오 쇼핑"
+                data["site"] ="KAKAO Commerse"
                 data["score"] =float(0)
                 docs["_source"] = data
                 es_index=data["index"]

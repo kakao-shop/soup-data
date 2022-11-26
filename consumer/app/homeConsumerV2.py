@@ -8,7 +8,7 @@ import RuleBaseClassifier
 import time
 from elasticsearch import Elasticsearch, helpers
 
- 
+import os
 
  
 
@@ -60,18 +60,20 @@ CatAndSubcat["즉석식품/양념"]=[
 ,"떡볶이/떡사리","시럽/잼","튀김류","케찹/마요네즈","떡갈비/함박스테이크","건어물"
 ,"베이컨/소시지","드레싱","새우","문어","쭈꾸미"]
 
+es_host = os.environ["ELASTICSEARCH_HOST"]
+es_port = os.environ["ELASTICSEARCH_PORT"]
 
+kafka_host = os.environ["KAFKA_HOST"]
+kafka_port = os.environ["KAFKA_PORT"]
 
-es = Elasticsearch(hosts="localhost", port=9200)
+es = Elasticsearch(hosts=es_host, port=es_port)
 
 
 client = ElaAPI()
 index_date = datetime.now().strftime('%Y-%m-%d-%H-%M')
  
 consumer=KafkaConsumer("home-test", 
-                        bootstrap_servers=['localhost:9092'], 
-                        # bootstrap_servers=['127.0.0.1:9092'], 
-
+                        bootstrap_servers=[kafka_host+":"+kafka_port], 
                         auto_offset_reset="earliest",
                         auto_commit_interval_ms=100,
                         enable_auto_commit=True, 
@@ -79,7 +81,6 @@ consumer=KafkaConsumer("home-test",
                         value_deserializer=lambda x: loads(x.decode('utf-8')), 
                         consumer_timeout_ms=1000 
             )
- 
 ruleBaseClassifier = RuleBaseClassifier.Classifier()
 def normalize(indexName):
         print("start normalize")
@@ -185,11 +186,17 @@ def beforeTime(time):
 def deleteIndex(deleteIndexName):
     es.indices.delete(index=deleteIndexName, ignore=[400, 404])
 
+
+
+start = time.time() 
+
+
 def __main__():
     es_index = ""
     print("start home")
     res = 0
     while True:
+        if time.time() - start > 350: exit()
         if res == 1: 
             print(res)
             break

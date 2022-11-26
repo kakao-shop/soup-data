@@ -21,9 +21,12 @@ def __main__ ():
 
 #--------------크롤링 시작 ------------------------------   
 
+
+kafka_host = os.environ["KAFKA_HOST"]
+kafka_port = os.environ["KAFKA_PORT"]
 class st11_crawling:
     def __init__(self):
-        self.bootstrap_servers = ['localhost:9092']
+        self.bootstrap_servers = [kafka_host+":"+kafka_port]
         # self.host = "127.0.0.1"
         # self.kafka_port = '9092'
         self.producer=KafkaProducer(acks=0, 
@@ -32,8 +35,8 @@ class st11_crawling:
             bootstrap_servers=self.bootstrap_servers,
             value_serializer=lambda x: dumps(x).encode('utf-8')
           )
-        self.driver_path = "./chromedriver.exe"
-        #self.driver_path = "/usr/src/chrome/chromedriver"
+        # self.driver_path = "./chromedriver.exe"
+        self.driver_path = "/usr/src/chrome/chromedriver"
         self.chrome_options = Options()
         self.chrome_options.add_argument('window-size=1280,1000')
         self.chrome_options.add_argument('--no-sandbox')
