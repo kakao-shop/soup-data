@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: es-data
+spec:
+  serviceName: es
+  replicas: 2
+  selector:
+    matchLabels:
+      app: elasticsearch # has to match .spec.template.metadata.labels
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      initContainers:
+      - name: fix-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: data
+          mountPath: /usr/share/elasticsearch/data
+      - name: increase-vm-max-map
+        image: busybox
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+      - name: increase-fd-ulimit
+        image: busybox
+        command: ["sh", "-c", "ulimit -n 65536"]
+        securityContext:
+          privileged: true
+      containers:
+      - name: elasticsearch
+        image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.6.1
+        imagePullPolicy: Always
+        resources:
+            limits:
+              cpu: 2
+            requests:
+              cpu: 1
+        ports:
+        - containerPort: 9300
+          name: inter-node
+          protocol: TCP
+        - containerPort: 9200
+          name: rest
+          protocol: TCP
+        volumeMounts:
+        - name: data
+          mountPath: /usr/share/elasticsearch/data
+        env:
+          - name: HOSTNAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: node.name
+            value: $(HOSTNAME).es.default.svc.cluster.local
+          - name: network.host
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: cluster.name
+            value: es-cluster-1
+          - name: cluster.initial_master_nodes
+            value: "es-master-0.es.default.svc.cluster.local"
+          - name: discovery.seed_hosts
+            value: "es-master-0.es.default.svc.cluster.local" #csv values of every master. ,es-master-1.es.default.svc.cluster.local,es-master-2.es.default.svc.cluster.local
+          - name: node.master
+            value: "false"
+          - name: node.data
+            value: "true"
+          - name: ES_JAVA_OPTS
+            value: "-Xms4G -Xmx4G"
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: elasticsearch
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi

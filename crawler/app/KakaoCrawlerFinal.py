@@ -22,12 +22,16 @@ kafka_port = os.environ["KAFKA_PORT"]
 class kakao_crawling:
     def __init__(self):
         self.bootstrap_servers = [kafka_host+":"+kafka_port]
+        print(self.bootstrap_servers)
         # self.bootstrap_server = "localhost:9092"
-        self.producer=KafkaProducer(acks=0, 
-            bootstrap_servers=[self.host + ":"+ self.kafka_port],
+        self.producer=KafkaProducer(
+            acks=0, 
             compression_type='gzip',
-            bootstrap_servers=self.bootstrap_server,
-            value_serializer=lambda x: dumps(x).encode('utf-8')
+            # bootstrap_servers=[self.host + ":"+ self.kafka_port],
+            bootstrap_servers=self.bootstrap_servers,
+            value_serializer=lambda x: dumps(x).encode('utf-8'),
+            linger_ms=1000
+
           )
 
         self.index_name =""

@@ -1,12 +1,29 @@
-import time
-start = time.time()  # 시작 시간 저장
- 
- 
-# 작업 코드
+def solution(k, score):
+    answer = []
+    data = []
+    for i in score:
+        if len(data) <k: 
+            
+            data.append(i)
+            data.sort()
+            answer.append(data[0])
+            
+        else: 
+            if data[0] > i: 
+                data.sort()
+                answer.append(data[0])
+                continue
+            else: 
+                data.pop(0)
+                data.append(i)
+                data.sort()
+                
+                answer.append(data[0])
+                
+                
+        
+    
+    return answer
 
-while(True):
-    if time.time() - start > 2: exit()
 
-print("time :", time.time() - start)  # 현재시각 - 시작시간 = 실행 시간
-
-
+solution(3,[10, 100, 20, 150, 1, 100, 200])
